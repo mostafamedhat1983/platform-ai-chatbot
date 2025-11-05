@@ -74,7 +74,7 @@ DB_CONFIG = {
 }
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
-BEDROCK_MODEL_ID = "amazon.titan-text-express-v1"
+BEDROCK_MODEL_ID = "amazon.nova-micro-v1:0"
 
 # Database functions
 async def create_db_pool():
