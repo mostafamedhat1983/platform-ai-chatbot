@@ -213,7 +213,7 @@ def render_sidebar():
             **AI Chatbot Interface**
             
             Powered by:
-            - AWS Bedrock (Claude 3 Haiku)
+            - AWS Bedrock (DeepSeek V3.1)
             - FastAPI Backend
             - Streamlit Frontend
             
@@ -238,7 +238,7 @@ def render_chat_interface():
     """Render main chat interface"""
     # Title
     st.title("💬 AI Chatbot")
-    st.caption("Chat with Claude 3 Haiku powered by AWS Bedrock")
+    st.caption("Chat with DeepSeek V3.1 powered by AWS Bedrock")
     
     # Display welcome message if no messages
     if not st.session_state.messages:
