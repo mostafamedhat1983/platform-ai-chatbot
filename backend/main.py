@@ -74,7 +74,7 @@ DB_CONFIG = {
 }
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
-BEDROCK_MODEL_ID = "meta.llama3-2-1b-instruct-v1:0"
+BEDROCK_MODEL_ID = "us.anthropic.claude-3-haiku-20240307-v1:0"
 
 # Database functions
 async def create_db_pool():
@@ -168,25 +168,37 @@ def get_bedrock_client():
         logger.error(f"Failed to create Bedrock client: {str(e)}")
         raise
 
-async def call_llama_text(message: str, conversation_history: list = None) -> str:
-    """Call AWS Bedrock Meta Llama model"""
+async def call_claude_haiku(message: str, conversation_history: list = None) -> str:
+    """Call AWS Bedrock Claude 3 Haiku model via inference profile"""
     try:
         bedrock_client = get_bedrock_client()
         
-        # Build conversation context as single string
-        context = ""
+        # Build conversation context
+        messages = []
+        
+        # Add conversation history if available
         if conversation_history:
             for entry in conversation_history[-5:]:  # Last 5 exchanges for context
-                context += f"User: {entry['user_message']}\n"
-                context += f"Assistant: {entry['ai_response']}\n"
+                messages.append({
+                    "role": "user",
+                    "content": entry['user_message']
+                })
+                messages.append({
+                    "role": "assistant",
+                    "content": entry['ai_response']
+                })
         
-        # Create prompt
-        prompt = context + f"User: {message}\nAssistant:"
+        # Add current message
+        messages.append({
+            "role": "user",
+            "content": message
+        })
         
-        # Prepare request body for Llama
+        # Prepare request body
         request_body = {
-            "prompt": prompt,
-            "max_gen_len": 2048,
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 2048,
+            "messages": messages,
             "temperature": 0.7,
             "top_p": 0.9,
         }
@@ -199,10 +211,10 @@ async def call_llama_text(message: str, conversation_history: list = None) -> st
         
         # Parse response
         response_body = json.loads(response['body'].read())
-        ai_response = response_body['generation']
+        ai_response = response_body['content'][0]['text']
         
-        logger.info("Successfully received response from Meta Llama")
-        return ai_response.strip()
+        logger.info("Successfully received response from Claude Haiku")
+        return ai_response
         
     except ClientError as e:
         error_code = e.response['Error']['Code']
@@ -263,8 +275,8 @@ async def chat(request: ChatRequest):
         # Get conversation history for context
         conversation_history = await get_conversation_history(session_id)
         
-        # Call Llama Text
-        ai_response = await call_llama_text(
+        # Call Claude Haiku
+        ai_response = await call_claude_haiku(
             message=request.message,
             conversation_history=conversation_history
         )
