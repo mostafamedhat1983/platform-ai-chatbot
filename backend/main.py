@@ -74,7 +74,7 @@ DB_CONFIG = {
 }
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
-BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
+BEDROCK_MODEL_ID = "us.anthropic.claude-3-haiku-20240307-v1:0"
 
 # Database functions
 async def create_db_pool():
