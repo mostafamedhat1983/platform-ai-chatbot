@@ -73,7 +73,7 @@ DB_CONFIG = {
     'autocommit': True,
 }
 
-AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
+AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
 BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
 
 # Database functions

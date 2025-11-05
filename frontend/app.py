@@ -4,6 +4,7 @@ from typing import Optional
 import time
 from datetime import datetime
 import json
+import os
 
 # Page configuration
 st.set_page_config(
@@ -14,7 +15,7 @@ st.set_page_config(
 )
 
 # Backend API configuration
-API_BASE_URL = st.secrets.get("API_BASE_URL", "http://chatbot-backend:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://chatbot-backend:8000")
 API_TIMEOUT = 30  # seconds
 
 # Custom CSS for better UI
@@ -231,7 +232,7 @@ def render_sidebar():
                 disabled=True,
                 help="Backend API endpoint"
             )
-            st.caption("Configure in secrets.toml or environment variables")
+            st.caption("Configure via environment variables in Kubernetes deployment")
 
 def render_chat_interface():
     """Render main chat interface"""
