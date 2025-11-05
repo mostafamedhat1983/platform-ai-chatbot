@@ -74,7 +74,7 @@ DB_CONFIG = {
 }
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
-BEDROCK_MODEL_ID = "us.anthropic.claude-3-haiku-20240307-v1:0"
+BEDROCK_MODEL_ID = "deepseek.v3-v1:0"
 
 # Database functions
 async def create_db_pool():
@@ -168,8 +168,8 @@ def get_bedrock_client():
         logger.error(f"Failed to create Bedrock client: {str(e)}")
         raise
 
-async def call_claude_haiku(message: str, conversation_history: list = None) -> str:
-    """Call AWS Bedrock Claude 3 Haiku model via inference profile"""
+async def call_deepseek(message: str, conversation_history: list = None) -> str:
+    """Call AWS Bedrock DeepSeek V3.1 model"""
     try:
         bedrock_client = get_bedrock_client()
         
@@ -213,7 +213,7 @@ async def call_claude_haiku(message: str, conversation_history: list = None) -> 
         response_body = json.loads(response['body'].read())
         ai_response = response_body['content'][0]['text']
         
-        logger.info("Successfully received response from Claude Haiku")
+        logger.info("Successfully received response from DeepSeek V3.1")
         return ai_response
         
     except ClientError as e:
@@ -275,8 +275,8 @@ async def chat(request: ChatRequest):
         # Get conversation history for context
         conversation_history = await get_conversation_history(session_id)
         
-        # Call Claude Haiku
-        ai_response = await call_claude_haiku(
+        # Call DeepSeek
+        ai_response = await call_deepseek(
             message=request.message,
             conversation_history=conversation_history
         )
