@@ -74,7 +74,7 @@ DB_CONFIG = {
 }
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-2')
-BEDROCK_MODEL_ID = "us.anthropic.claude-3-haiku-20240307-v1:0"
+BEDROCK_MODEL_ID = "amazon.titan-text-express-v1"
 
 # Database functions
 async def create_db_pool():
@@ -168,39 +168,29 @@ def get_bedrock_client():
         logger.error(f"Failed to create Bedrock client: {str(e)}")
         raise
 
-async def call_claude_haiku(message: str, conversation_history: list = None) -> str:
-    """Call AWS Bedrock Claude 3 Haiku model"""
+async def call_titan_text(message: str, conversation_history: list = None) -> str:
+    """Call AWS Bedrock Amazon Titan Text Express model"""
     try:
         bedrock_client = get_bedrock_client()
         
-        # Build conversation context
-        messages = []
-        
-        # Add conversation history if available
+        # Build conversation context as single string
+        context = ""
         if conversation_history:
             for entry in conversation_history[-5:]:  # Last 5 exchanges for context
-                messages.append({
-                    "role": "user",
-                    "content": entry['user_message']
-                })
-                messages.append({
-                    "role": "assistant",
-                    "content": entry['ai_response']
-                })
+                context += f"User: {entry['user_message']}\n"
+                context += f"Assistant: {entry['ai_response']}\n"
         
-        # Add current message
-        messages.append({
-            "role": "user",
-            "content": message
-        })
+        # Create prompt
+        prompt = context + f"User: {message}\nAssistant:"
         
         # Prepare request body
         request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 2048,
-            "messages": messages,
-            "temperature": 0.7,
-            "top_p": 0.9,
+            "inputText": prompt,
+            "textGenerationConfig": {
+                "maxTokenCount": 2048,
+                "temperature": 0.7,
+                "topP": 0.9,
+            }
         }
         
         # Call Bedrock
@@ -211,10 +201,10 @@ async def call_claude_haiku(message: str, conversation_history: list = None) -> 
         
         # Parse response
         response_body = json.loads(response['body'].read())
-        ai_response = response_body['content'][0]['text']
+        ai_response = response_body['results'][0]['outputText']
         
-        logger.info("Successfully received response from Claude Haiku")
-        return ai_response
+        logger.info("Successfully received response from Amazon Titan Text")
+        return ai_response.strip()
         
     except ClientError as e:
         error_code = e.response['Error']['Code']
@@ -275,8 +265,8 @@ async def chat(request: ChatRequest):
         # Get conversation history for context
         conversation_history = await get_conversation_history(session_id)
         
-        # Call Claude Haiku
-        ai_response = await call_claude_haiku(
+        # Call Titan Text
+        ai_response = await call_titan_text(
             message=request.message,
             conversation_history=conversation_history
         )
