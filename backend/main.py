@@ -194,11 +194,10 @@ async def call_deepseek(message: str, conversation_history: list = None) -> str:
             "content": message
         })
         
-        # Prepare request body
+        # Prepare request body for DeepSeek
         request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 2048,
             "messages": messages,
+            "max_tokens": 2048,
             "temperature": 0.7,
             "top_p": 0.9,
         }
