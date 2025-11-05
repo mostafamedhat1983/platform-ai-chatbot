@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # Backend API configuration
-API_BASE_URL = os.getenv("API_BASE_URL", "http://chatbot-backend:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_TIMEOUT = 30  # seconds
 
 # Custom CSS for better UI
