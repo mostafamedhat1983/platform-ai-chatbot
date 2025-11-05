@@ -208,9 +208,10 @@ async def call_deepseek(message: str, conversation_history: list = None) -> str:
             body=json.dumps(request_body)
         )
         
-        # Parse response
+        # Parse response for DeepSeek
         response_body = json.loads(response['body'].read())
-        ai_response = response_body['content'][0]['text']
+        # DeepSeek uses OpenAI-compatible format
+        ai_response = response_body['choices'][0]['message']['content']
         
         logger.info("Successfully received response from DeepSeek V3.1")
         return ai_response
