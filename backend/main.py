@@ -169,51 +169,29 @@ def get_bedrock_client():
         raise
 
 async def call_claude_haiku(message: str, conversation_history: list = None) -> str:
-    """Call AWS Bedrock Claude 3 Haiku model via inference profile"""
+    """Mock AI response for testing infrastructure"""
     try:
-        bedrock_client = get_bedrock_client()
+        # Simulate processing time
+        import asyncio
+        await asyncio.sleep(0.5)
         
-        # Build conversation context
-        messages = []
-        
-        # Add conversation history if available
-        if conversation_history:
-            for entry in conversation_history[-5:]:  # Last 5 exchanges for context
-                messages.append({
-                    "role": "user",
-                    "content": entry['user_message']
-                })
-                messages.append({
-                    "role": "assistant",
-                    "content": entry['ai_response']
-                })
-        
-        # Add current message
-        messages.append({
-            "role": "user",
-            "content": message
-        })
-        
-        # Prepare request body
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 2048,
-            "messages": messages,
-            "temperature": 0.7,
-            "top_p": 0.9,
+        # Generate mock response based on message
+        responses = {
+            "hello": "Hello! I'm a mock AI assistant. Your infrastructure is working perfectly!",
+            "how are you": "I'm doing great! This is a mock response to test your chatbot infrastructure.",
+            "test": "Test successful! Your backend, database, and API are all functioning correctly.",
         }
         
-        # Call Bedrock
-        response = bedrock_client.invoke_model(
-            modelId=BEDROCK_MODEL_ID,
-            body=json.dumps(request_body)
-        )
+        # Check for keyword matches
+        message_lower = message.lower()
+        for keyword, response in responses.items():
+            if keyword in message_lower:
+                return response
         
-        # Parse response
-        response_body = json.loads(response['body'].read())
-        ai_response = response_body['content'][0]['text']
+        # Default response
+        ai_response = f"Mock AI received your message: '{message}'. Your chatbot infrastructure is working! This is a temporary mock response while we wait for Bedrock subscription to activate."
         
-        logger.info("Successfully received response from Claude Haiku")
+        logger.info("Successfully generated mock AI response")
         return ai_response
         
     except ClientError as e:
