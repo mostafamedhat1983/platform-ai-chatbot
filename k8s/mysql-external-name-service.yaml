@@ -1,0 +1,8 @@
+#rds-mysql-endpoint-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  type: ExternalName
+  externalName: {{ .Values.db_endpoint }}
