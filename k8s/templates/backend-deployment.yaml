@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend-container
+        image: {{ .Values.backend.image }}
+        ports:
+        - containerPort: {{ .Values.backend.port }}
+        env:                           
+        - name: DB_HOST
+          value: {{ .Values.database.host }}
+        - name: DB_PORT
+          value: "{{ .Values.database.port }}"
+        - name: AWS_REGION
+          value: "us-east-2"
+        - name: DB_USER
+          value: {{ .Values.db_user }}
+        - name: DB_PASSWORD
+          value: {{ .Values.db_password }}
+        - name: DB_NAME
+          value: {{ .Values.db_name }}
+        resources:
+          requests:
+            memory: {{ .Values.backend.resources.requests.memory }}
+            cpu: {{ .Values.backend.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.backend.resources.limits.memory }}
+            cpu: {{ .Values.backend.resources.limits.cpu }}

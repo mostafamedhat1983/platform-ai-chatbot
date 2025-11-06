@@ -1,0 +1,6 @@
+apiVersion: v2
+name: chatbotapp
+version: 0.1.0
+description: AI Chatbot application with FastAPI backend and Streamlit frontend
+type: application
+appVersion: "1.0.0"

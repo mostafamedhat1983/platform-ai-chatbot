@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-# Create non-root user with home directory for security
-RUN groupadd -r appuser && useradd -r -g appuser -m -d /home/appuser appuser
+# Create non-root user with explicit UID/GID and home directory for security
+RUN groupadd -r -g 1000 appuser && useradd -r -u 1000 -g 1000 -m -d /home/appuser appuser
 
 WORKDIR /app
 COPY requirements.txt .

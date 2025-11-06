@@ -1,0 +1,24 @@
+# Production environment values
+environment: prod
+
+replicaCount: 3
+
+backend:
+  image: backend:prod
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+frontend:
+  image: frontend:prod
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

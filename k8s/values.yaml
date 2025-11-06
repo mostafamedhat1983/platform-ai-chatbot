@@ -1,0 +1,32 @@
+# Default values for chatbotapp
+replicaCount: 1
+
+backend:
+  image: backend:latest
+  port: 8000
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+frontend:
+  image: frontend:latest
+  port: 8501
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Database configuration
+database:
+  host: mysql
+  port: 3306
+
+# Environment
+environment: dev
