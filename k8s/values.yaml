@@ -4,6 +4,8 @@ replicaCount: 1
 backend:
   image: backend:latest
   port: 8000
+  pdb:
+    minAvailable: 1
   resources:
     requests:
       memory: "128Mi"

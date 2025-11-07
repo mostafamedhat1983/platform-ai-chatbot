@@ -5,6 +5,8 @@ replicaCount: 3
 
 backend:
   image: backend:prod
+  pdb:
+    minAvailable: 2
   resources:
     requests:
       memory: "256Mi"
