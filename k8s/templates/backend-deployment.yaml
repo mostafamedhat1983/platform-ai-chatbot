@@ -14,9 +14,21 @@ spec:
       labels:
         app: backend
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: backend
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: backend-container
         image: {{ .Values.backend.image }}
+        securityContext:   # run as user appuser (non root with no escalation capability)
+          runAsUser: 1000
+          runAsGroup: 1000
         ports:
         - containerPort: {{ .Values.backend.port }}
         env:                           
