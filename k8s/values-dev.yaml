@@ -1,22 +1,36 @@
-# Development environment values
+# ========================================
+# Development Environment Values
+# ========================================
+# Cost-optimized configuration for dev environment
+# 2 replicas for testing HA without high cost
+
 environment: dev
 
-replicaCount: 2
+# ========================================
+# Replica Configuration
+# ========================================
+replicaCount: 2  # Test HA with minimal cost
 
+# ========================================
+# Backend Service
+# ========================================
 backend:
-  image: backend:dev
+  image: backend:dev  # TODO: Update with ECR dev image URL
   pdb:
-    minAvailable: 1
+    minAvailable: 1  # Keep 1 pod running during disruptions
   resources:
     requests:
-      memory: "128Mi"
+      memory: "128Mi"  # Minimal resources for dev
       cpu: "100m"
     limits:
       memory: "256Mi"
       cpu: "200m"
 
+# ========================================
+# Frontend Service
+# ========================================
 frontend:
-  image: frontend:dev
+  image: frontend:dev  # TODO: Update with ECR dev image URL
   resources:
     requests:
       memory: "128Mi"

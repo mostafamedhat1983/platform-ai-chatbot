@@ -1,3 +1,10 @@
+# ========================================
+# Backend Pod Disruption Budget
+# ========================================
+# Ensures minimum number of backend pods remain available during:
+# - Voluntary disruptions (node drains, updates)
+# - Prevents all pods being terminated simultaneously
+
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

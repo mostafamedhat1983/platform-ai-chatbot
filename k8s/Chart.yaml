@@ -1,3 +1,11 @@
+# ========================================
+# Helm Chart Metadata
+# ========================================
+# AI Chatbot application with AWS Bedrock integration
+# Backend: FastAPI + Bedrock DeepSeek V3.1
+# Frontend: Streamlit UI
+# Database: RDS MySQL
+
 apiVersion: v2
 name: chatbotapp
 version: 0.1.0

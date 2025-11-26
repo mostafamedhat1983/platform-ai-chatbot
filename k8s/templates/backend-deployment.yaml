@@ -1,3 +1,9 @@
+# ========================================
+# Backend Deployment
+# ========================================
+# FastAPI backend deployment with AWS Bedrock integration
+# Connects to RDS MySQL for conversation storage
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,19 +12,31 @@ metadata:
     app: backend
 spec:
   replicas: {{ .Values.replicaCount }}
+  
+  # ========================================
+  # Update Strategy
+  # ========================================
+  # Rolling update: one pod down max, one pod surge max
+  # Ensures zero-downtime deployments
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
+  
   selector:
     matchLabels:
       app: backend
+  
   template:
     metadata:
       labels:
         app: backend
     spec:
+      # ========================================
+      # Pod Scheduling
+      # ========================================
+      # Prefer spreading pods across different nodes for availability
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -28,15 +46,28 @@ spec:
                 matchLabels:
                   app: backend
               topologyKey: kubernetes.io/hostname
+      
       containers:
       - name: backend-container
         image: {{ .Values.backend.image }}
-        securityContext:   # run as user appuser (non root with no escalation capability)
+        
+        # ========================================
+        # Security Context
+        # ========================================
+        # Run as non-root user (UID 1000) for security
+        securityContext:
           runAsUser: 1000
           runAsGroup: 1000
+        
         ports:
         - containerPort: {{ .Values.backend.port }}
-        env:                           
+        
+        # ========================================
+        # Environment Variables
+        # ========================================
+        # Database connection and AWS configuration
+        # TODO: Move DB_USER and DB_PASSWORD to SecretProviderClass
+        env:
         - name: DB_HOST
           value: {{ .Values.database.host }}
         - name: DB_PORT
@@ -49,18 +80,31 @@ spec:
           value: {{ .Values.db_password }}
         - name: DB_NAME
           value: {{ .Values.db_name }}
+        
+        # ========================================
+        # Health Checks
+        # ========================================
+        # Liveness: restart pod if unhealthy after 30s
         livenessProbe:
           httpGet:
             path: /health
             port: {{ .Values.backend.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
+        
+        # Readiness: route traffic only when ready (5s check)
         readinessProbe:
           httpGet:
             path: /health
             port: {{ .Values.backend.port }}
           initialDelaySeconds: 5
           periodSeconds: 5
+        
+        # ========================================
+        # Resource Limits
+        # ========================================
+        # Requests: guaranteed resources
+        # Limits: maximum allowed resources
         resources:
           requests:
             memory: {{ .Values.backend.resources.requests.memory }}

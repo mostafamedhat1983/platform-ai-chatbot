@@ -1,22 +1,36 @@
-# Production environment values
+# ========================================
+# Production Environment Values
+# ========================================
+# High availability configuration for production
+# 3 replicas with increased resources
+
 environment: prod
 
-replicaCount: 3
+# ========================================
+# Replica Configuration
+# ========================================
+replicaCount: 3  # High availability with 3 pods
 
+# ========================================
+# Backend Service
+# ========================================
 backend:
-  image: backend:prod
+  image: backend:prod  # TODO: Update with ECR prod image URL
   pdb:
-    minAvailable: 2
+    minAvailable: 2  # Keep 2 pods running during disruptions
   resources:
     requests:
-      memory: "256Mi"
+      memory: "256Mi"  # Higher resources for production load
       cpu: "200m"
     limits:
       memory: "512Mi"
       cpu: "500m"
 
+# ========================================
+# Frontend Service
+# ========================================
 frontend:
-  image: frontend:prod
+  image: frontend:prod  # TODO: Update with ECR prod image URL
   resources:
     requests:
       memory: "256Mi"

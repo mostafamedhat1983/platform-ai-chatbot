@@ -1,4 +1,10 @@
-#rds-mysql-endpoint-service
+# ========================================
+# MySQL ExternalName Service
+# ========================================
+# DNS alias pointing to RDS MySQL instance
+# Allows pods to connect to external database using service name "mysql"
+# Maps to actual RDS endpoint from values.yaml
+
 apiVersion: v1
 kind: Service
 metadata:
