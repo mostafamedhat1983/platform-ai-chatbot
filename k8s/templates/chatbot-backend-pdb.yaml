@@ -1,0 +1,18 @@
+# ========================================
+# Backend Pod Disruption Budget
+# ========================================
+# Ensures minimum pods available during voluntary disruptions
+# Dev: minAvailable 1 (with 2 replicas) allows 1 pod down during updates
+# Prod: minAvailable 2 (with 3 replicas) allows 1 pod down during updates
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: chatbot-backend-pdb
+  labels:
+    app: chatbot-backend
+spec:
+  minAvailable: {{ .Values.backend.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: chatbot-backend

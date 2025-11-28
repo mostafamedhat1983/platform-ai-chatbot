@@ -7,9 +7,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-deployment
+  name: chatbot-backend-deployment
   labels:
-    app: backend
+    app: chatbot-backend
 spec:
   replicas: {{ .Values.replicaCount }}
   
@@ -26,12 +26,12 @@ spec:
   
   selector:
     matchLabels:
-      app: backend
+      app: chatbot-backend
   
   template:
     metadata:
       labels:
-        app: backend
+        app: chatbot-backend
     spec:
       # ========================================
       # Pod Scheduling
@@ -44,7 +44,7 @@ spec:
             podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app: backend
+                  app: chatbot-backend
               topologyKey: kubernetes.io/hostname
       
       containers:
@@ -54,10 +54,12 @@ spec:
         # ========================================
         # Security Context
         # ========================================
-        # Run as non-root user (UID 1000) for security
+        # Run as non-root user (UID 1000) with no privilege escalation
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
         
         ports:
         - containerPort: {{ .Values.backend.port }}

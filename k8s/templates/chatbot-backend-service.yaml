@@ -1,0 +1,19 @@
+# ========================================
+# Backend Service
+# ========================================
+# ClusterIP service exposing backend API
+# Frontend connects via: http://chatbot-backend:8000
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: chatbot-backend
+  ports:
+    - port: 8000         # Service port (what other pods connect to)
+      name: http
+      targetPort: 8000   # Container port (where FastAPI listens)
+      protocol: TCP
