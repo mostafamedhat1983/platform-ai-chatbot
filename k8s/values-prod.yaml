@@ -38,9 +38,3 @@ frontend:
     limits:
       memory: "512Mi"
       cpu: "500m"
-
-# ========================================
-# RDS Endpoint
-# ========================================
-# Retrieve from AWS Parameter Store: rds-prod-endpoint
-db_endpoint: "REPLACE_WITH_PROD_RDS_ENDPOINT"

@@ -75,17 +75,13 @@ spec:
         # ========================================
         # Non-sensitive configuration values
         env:
-        - name: DB_HOST
-          value: {{ .Values.database.host }}
-        - name: DB_PORT
-          value: "{{ .Values.database.port }}"
         - name: AWS_REGION
           value: "us-east-2"
         
         # ========================================
         # Secrets from AWS Secrets Manager
         # ========================================
-        # Injects K8s Secret as environment variables
+        # Injects K8s Secret as environment variables (DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT)
         # Secret created by Secrets Store CSI Driver from AWS Secrets Manager
         # Flow: AWS Secrets Manager → CSI Driver → K8s Secret → env vars
         envFrom:
