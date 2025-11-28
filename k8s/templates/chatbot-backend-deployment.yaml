@@ -34,6 +34,12 @@ spec:
         app: chatbot-backend
     spec:
       # ========================================
+      # Service Account
+      # ========================================
+      # Links pods to IAM role via Pod Identity for AWS Bedrock access
+      serviceAccountName: chatbot-backend-service-account
+      
+      # ========================================
       # Pod Scheduling
       # ========================================
       # Prefer spreading pods across different nodes for availability
@@ -67,8 +73,7 @@ spec:
         # ========================================
         # Environment Variables
         # ========================================
-        # Database connection and AWS configuration
-        # TODO: Move DB_USER and DB_PASSWORD to SecretProviderClass
+        # Non-sensitive configuration values
         env:
         - name: DB_HOST
           value: {{ .Values.database.host }}
@@ -76,12 +81,16 @@ spec:
           value: "{{ .Values.database.port }}"
         - name: AWS_REGION
           value: "us-east-2"
-        - name: DB_USER
-          value: {{ .Values.db_user }}
-        - name: DB_PASSWORD
-          value: {{ .Values.db_password }}
-        - name: DB_NAME
-          value: {{ .Values.db_name }}
+        
+        # ========================================
+        # Secrets from AWS Secrets Manager
+        # ========================================
+        # Injects K8s Secret as environment variables
+        # Secret created by Secrets Store CSI Driver from AWS Secrets Manager
+        # Flow: AWS Secrets Manager → CSI Driver → K8s Secret → env vars
+        envFrom:
+        - secretRef:
+            name: chatbot-backend-db-credentials
         
         # ========================================
         # Health Checks
@@ -114,3 +123,16 @@ spec:
           limits:
             memory: {{ .Values.backend.resources.limits.memory }}
             cpu: {{ .Values.backend.resources.limits.cpu }}
+      
+      # ========================================
+      # Volumes
+      # ========================================
+      # CSI volume for AWS Secrets Manager integration
+      # Triggers Secrets Store CSI Driver to fetch secrets and create K8s Secret
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "chatbot-backend-secrets"

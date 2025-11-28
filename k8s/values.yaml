@@ -56,6 +56,13 @@ database:
   port: 3306
 
 # ========================================
+# RDS Endpoint
+# ========================================
+# Actual RDS endpoint from Parameter Store
+# Format: <instance-id>.xxxxx.us-east-2.rds.amazonaws.com:3306
+db_endpoint: "REPLACE_WITH_RDS_ENDPOINT"  # Get from: aws ssm get-parameter --name rds-dev-endpoint
+
+# ========================================
 # Environment
 # ========================================
 environment: dev  # Options: dev, prod
