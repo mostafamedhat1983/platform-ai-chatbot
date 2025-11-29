@@ -82,8 +82,8 @@ spec:
         # Secrets from AWS Secrets Manager
         # ========================================
         # Injects K8s Secret as environment variables (DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT)
-        # Secret created by Secrets Store CSI Driver from AWS Secrets Manager
-        # Flow: AWS Secrets Manager → CSI Driver → K8s Secret → env vars
+        # Secret created by init container from AWS Secrets Manager
+        # Flow: Init container → AWS Secrets Manager → K8s Secret → env vars
         envFrom:
         - secretRef:
             name: chatbot-backend-db-credentials
@@ -121,14 +121,71 @@ spec:
             cpu: {{ .Values.backend.resources.limits.cpu }}
       
       # ========================================
-      # Volumes
+      # Init Container - Fetch Secrets
       # ========================================
-      # CSI volume for AWS Secrets Manager integration
-      # Triggers Secrets Store CSI Driver to fetch secrets and create K8s Secret
-      volumes:
-      - name: secrets-store
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: "chatbot-backend-secrets"
+      # Fetches DB credentials from AWS Secrets Manager and creates K8s Secret
+      # Runs before main container starts
+      initContainers:
+      - name: fetch-secrets
+        image: amazon/aws-cli:latest
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Fetching secrets from AWS Secrets Manager..."
+            
+            # Fetch secret JSON from Secrets Manager
+            SECRET_JSON=$(aws secretsmanager get-secret-value \
+              --secret-id platform-db-{{ .Values.environment }}-credentials \
+              --region us-east-2 \
+              --query SecretString \
+              --output text)
+            
+            if [ $? -ne 0 ]; then
+              echo "ERROR: Failed to fetch secret from Secrets Manager"
+              exit 1
+            fi
+            
+            # Parse JSON and extract values
+            DB_USER=$(echo "$SECRET_JSON" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+            DB_PASSWORD=$(echo "$SECRET_JSON" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
+            DB_NAME=$(echo "$SECRET_JSON" | grep -o '"dbname":"[^"]*"' | cut -d'"' -f4)
+            DB_HOST=$(echo "$SECRET_JSON" | grep -o '"host":"[^"]*"' | cut -d'"' -f4)
+            DB_PORT=$(echo "$SECRET_JSON" | grep -o '"port":"[^"]*"' | cut -d'"' -f4)
+            
+            # Validate extracted values
+            if [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ]; then
+              echo "ERROR: Failed to parse secret values"
+              exit 1
+            fi
+            
+            echo "Successfully extracted all secret values"
+            
+            # Create Kubernetes Secret using kubectl
+            kubectl create secret generic chatbot-backend-db-credentials \
+              --from-literal=DB_USER="$DB_USER" \
+              --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+              --from-literal=DB_NAME="$DB_NAME" \
+              --from-literal=DB_HOST="$DB_HOST" \
+              --from-literal=DB_PORT="$DB_PORT" \
+              --dry-run=client -o yaml | kubectl apply -f -
+            
+            if [ $? -eq 0 ]; then
+              echo "Successfully created/updated Kubernetes Secret"
+            else
+              echo "ERROR: Failed to create Kubernetes Secret"
+              exit 1
+            fi
+        
+        env:
+        - name: AWS_REGION
+          value: "us-east-2"
+        
+        # ========================================
+        # Security Context for Init Container
+        # ========================================
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true

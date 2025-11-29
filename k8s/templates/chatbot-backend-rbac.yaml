@@ -1,0 +1,35 @@
+# ========================================
+# RBAC for Init Container
+# ========================================
+# Grants chatbot-backend service account permission to create/update Kubernetes Secrets
+# Required by init container to store fetched AWS Secrets Manager credentials
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chatbot-backend-secret-manager
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "patch"]
+    resourceNames: ["chatbot-backend-db-credentials"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: chatbot-backend-secret-manager
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: chatbot-backend-secret-manager
+subjects:
+- kind: ServiceAccount
+  name: chatbot-backend-service-account
+  namespace: {{ .Release.Namespace }}
