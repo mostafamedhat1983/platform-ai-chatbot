@@ -153,8 +153,8 @@ spec:
             
             echo "Raw secret JSON: $SECRET_JSON"
             
-            # Install jq for reliable JSON parsing
-            apk add --no-cache jq
+            # Install jq for reliable JSON parsing (Amazon Linux uses yum)
+            yum install -y jq
             
             # Parse JSON using jq
             DB_USER=$(echo "$SECRET_JSON" | jq -r '.username')

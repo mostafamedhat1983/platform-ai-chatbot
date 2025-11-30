@@ -13,11 +13,7 @@ spec:
   rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "create", "update", "patch"]
-    resourceNames: ["chatbot-backend-db-credentials"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["create"]
+    verbs: ["get", "list", "create", "update", "patch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
