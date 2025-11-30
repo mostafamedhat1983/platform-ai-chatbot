@@ -39,27 +39,25 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **AWS Bedrock DeepSeek V3.1** - Serverless AI with 0.27$/1M tokens (no model hosting or GPU management)
 - **Pod Identity (2023)** - Direct AWS service authentication eliminating OIDC/IRSA complexity
 - **Init Container Secrets** - DB credentials fetched at pod startup for improved debugging visibility
-- **Helm Charts** - Templated Kubernetes manifests with environment-specific overrides
-- **Rolling Updates** - Zero-downtime deployments with configurable max unavailable/surge
-- **Pod Disruption Budgets** - Guarantees minimum availability during node maintenance
+- **Multi-Environment Helm Deployment** - Single chart deploys dev/prod using values-dev.yaml and values-prod.yaml
+- **Security Context** - Non-root containers (UID 1000) with privilege escalation disabled
+- **Health Probes** - Liveness (restart unhealthy pods after 30s) and readiness (traffic routing control after 5s)
+- **Rolling Updates** - Zero-downtime deployments (MaxUnavailable=1, MaxSurge=1)
+- **High Availability** - PodAntiAffinity spreads replicas across nodes, PodDisruptionBudget ensures minimum availability during node maintenance
 
 **Security & Reliability:**
 - **Zero Credential Exposure:** Secrets always encrypted (at rest in Secrets Manager with KMS, in transit via TLS 1.2+, in use loaded to memory only), never in code, images, manifests, or disk
 - **End-to-End Encryption:** SSL/TLS for RDS connections, HTTPS for AWS API calls, encrypted EBS volumes
 - **Pod Identity:** AWS authentication without static credentials, tokens, or OIDC configuration files
-- **Init Container Secrets:** Credentials fetched at pod startup directly into application memory, no environment variables or ConfigMaps
 - **Least Privilege IAM:** Backend restricted to `bedrock:InvokeModel` on specific model ARN only
-- **Kubernetes RBAC:** Service account permissions scoped to minimum required operations
-- **Health Monitoring:** Automatic pod restart on failures with graceful shutdown
-- **High Availability:** PodAntiAffinity spreads replicas across nodes, PDB ensures minimum availability during disruptions
-- **Resource Isolation:** Memory/CPU limits prevent resource exhaustion and noisy neighbor attacks
+- **Security Context:** Non-root containers (UID 1000) with privilege escalation disabled
+- **Resource Isolation:** Memory/CPU requests and limits prevent resource exhaustion and noisy neighbor attacks
 
 **Code Quality:**
 - FastAPI with Pydantic validation and comprehensive error handling
 - Async MySQL connection pooling with proper lifecycle management
-- Structured logging and health monitoring
-- Environment-specific Helm values (dev/prod)
-- Containerized with multi-stage builds
+- Structured logging and health monitoring endpoints
+- Containerized with optimized Docker images
 
 ## 🛠️ Technologies & Skills
 
@@ -148,8 +146,6 @@ Evaluated AWS Secrets Store CSI Driver but chose init containers for:
 ### Kubernetes Security
 
 - **RBAC:** Service account permissions limited to required Kubernetes resources only
-- **Resource Limits:** Memory (256Mi) and CPU (200m) caps prevent DoS attacks
-- **No Privilege Escalation:** Pods run as non-root users (future enhancement)
 - **Network Policies:** (Planned) Restrict pod-to-pod traffic to required services only
 
 ## 💡 Key Technical Decisions
@@ -157,12 +153,10 @@ Evaluated AWS Secrets Store CSI Driver but chose init containers for:
 Architecture choices made through research and hands-on evaluation:
 
 - **AWS Bedrock DeepSeek V3.1:** Serverless AI (no GPU management), pay-per-use ($0.27/1M tokens), 64K context window for conversation history
-- **Init Container Secrets:** Chosen over AWS Secrets Store CSI Driver for improved debugging visibility (logs in app pod), simpler architecture, direct error messages
+- **Init Container Secrets:** Chosen over AWS Secrets Store CSI Driver for better debugging visibility (logs in app pod), simpler architecture (no CSI addon), and direct AWS API error messages
 - **FastAPI Async:** Non-blocking I/O for AI and database calls, connection pooling, lifespan management
-- **Helm Charts:** Environment-specific values eliminate manifest duplication, support GitOps workflows
-- **Pod Disruption Budgets:** Ensures backend availability during node drains and cluster upgrades
+- **Multi-Environment Helm:** Single chart with environment-specific values files eliminates manifest duplication, supports GitOps workflows
 - **Session Persistence:** MySQL storage enables conversation continuity across pod restarts
-- **SSL/TLS to RDS:** Encryption in transit for compliance and security
 
 ## 🚀 Deployment
 
@@ -295,14 +289,13 @@ Frontend and backend application code generated with **Claude Sonnet 4.5** to ac
 
 ## 🎓 Key Learnings
 
-1. Init containers provide better debugging visibility than CSI driver approaches
-2. Pod Identity simplifies AWS authentication vs OIDC/IRSA
-3. Helm charts eliminate manifest duplication across environments
-4. Pod Disruption Budgets critical for zero-downtime cluster operations
-5. Async connection pooling essential for scalable database access
-6. Health checks and graceful shutdown prevent traffic to terminating pods
-7. Resource limits prevent cascading failures from resource exhaustion
-8. Conversation persistence requires careful session ID management
+1. Init containers provide better debugging visibility than CSI driver approaches (logs in application pod vs kube-system namespace)
+2. Pod Identity eliminates OIDC/IRSA complexity while providing same AWS service authentication
+3. Multi-environment Helm deployment with values files eliminates manifest duplication and reduces configuration drift
+4. Pod Disruption Budgets + health probes + rolling updates critical for zero-downtime deployments during cluster maintenance
+5. Async MySQL connection pooling essential for scalable database access under concurrent AI request load
+6. Secrets encrypted at rest (KMS), in transit (TLS 1.2+), and in use (memory-only) ensures zero credential exposure
+7. Non-root containers with resource limits prevent privilege escalation and resource exhaustion attacks
 
 ## 🤝 Contributing
 
