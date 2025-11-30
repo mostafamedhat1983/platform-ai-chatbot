@@ -153,15 +153,12 @@ spec:
             
             echo "Raw secret JSON: $SECRET_JSON"
             
-            # Install jq for reliable JSON parsing (Amazon Linux uses yum)
-            yum install -y jq
-            
-            # Parse JSON using jq
-            DB_USER=$(echo "$SECRET_JSON" | jq -r '.username')
-            DB_PASSWORD=$(echo "$SECRET_JSON" | jq -r '.password')
-            DB_NAME=$(echo "$SECRET_JSON" | jq -r '.dbname')
-            DB_HOST=$(echo "$SECRET_JSON" | jq -r '.host')
-            DB_PORT=$(echo "$SECRET_JSON" | jq -r '.port')
+            # Parse JSON using Python (already available in aws-cli image)
+            DB_USER=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['username'])")
+            DB_PASSWORD=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['password'])")
+            DB_NAME=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['dbname'])")
+            DB_HOST=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['host'])")
+            DB_PORT=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['port'])")
             
             # Validate extracted values
             if [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ]; then
