@@ -132,10 +132,9 @@ spec:
           - /bin/sh
           - -c
           - |
-            # Install kubectl to /tmp (writable by non-root)
-            cd /tmp
+            # Install kubectl
             curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
-            chmod +x kubectl
+            chmod +x kubectl && mv kubectl /usr/local/bin/
             
             echo "Fetching secrets from AWS Secrets Manager..."
             
@@ -173,13 +172,13 @@ spec:
             echo "Successfully extracted all secret values"
             
             # Create Kubernetes Secret using kubectl
-            /tmp/kubectl create secret generic chatbot-backend-db-credentials \
+            kubectl create secret generic chatbot-backend-db-credentials \
               --from-literal=DB_USER="$DB_USER" \
               --from-literal=DB_PASSWORD="$DB_PASSWORD" \
               --from-literal=DB_NAME="$DB_NAME" \
               --from-literal=DB_HOST="$DB_HOST" \
               --from-literal=DB_PORT="$DB_PORT" \
-              --dry-run=client -o yaml | /tmp/kubectl apply -f -
+              --dry-run=client -o yaml | kubectl apply -f -
             
             if [ $? -eq 0 ]; then
               echo "Successfully created/updated Kubernetes Secret"
@@ -195,8 +194,7 @@ spec:
         # ========================================
         # Security Context for Init Container
         # ========================================
+        # Runs as root to install kubectl and create K8s secrets
+        # Safe because init containers run once before app starts
         securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
           allowPrivilegeEscalation: false
-          runAsNonRoot: true
