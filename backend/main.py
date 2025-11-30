@@ -78,7 +78,7 @@ BEDROCK_MODEL_ID = "deepseek.v3-v1:0"
 
 # Database functions
 async def create_db_pool():
-    """Create MySQL connection pool"""
+    """Create MySQL connection pool with SSL/TLS encryption"""
     try:
         pool = await aiomysql.create_pool(
             host=DB_CONFIG['host'],
@@ -89,8 +89,9 @@ async def create_db_pool():
             autocommit=DB_CONFIG['autocommit'],
             minsize=1,
             maxsize=10,
+            ssl={'ssl': True},  # Enable SSL/TLS encryption for RDS connection
         )
-        logger.info("Database pool created successfully")
+        logger.info("Database pool created successfully with SSL/TLS")
         return pool
     except Exception as e:
         logger.error(f"Failed to create database pool: {str(e)}")
