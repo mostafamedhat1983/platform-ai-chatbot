@@ -150,7 +150,7 @@ spec:
               exit 1
             fi
             
-            echo "Raw secret JSON: $SECRET_JSON"
+            echo "Successfully fetched secret from Secrets Manager"
             
             # Parse JSON using Python (already available in aws-cli image)
             DB_USER=$(echo "$SECRET_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['username'])")
