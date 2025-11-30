@@ -132,9 +132,10 @@ spec:
           - /bin/sh
           - -c
           - |
-            # Install kubectl
+            # Install kubectl to /tmp (writable by non-root)
+            cd /tmp
             curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
-            chmod +x kubectl && mv kubectl /usr/local/bin/
+            chmod +x kubectl
             
             echo "Fetching secrets from AWS Secrets Manager..."
             
@@ -150,29 +151,38 @@ spec:
               exit 1
             fi
             
-            # Parse JSON and extract values
-            DB_USER=$(echo "$SECRET_JSON" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
-            DB_PASSWORD=$(echo "$SECRET_JSON" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
-            DB_NAME=$(echo "$SECRET_JSON" | grep -o '"dbname":"[^"]*"' | cut -d'"' -f4)
-            DB_HOST=$(echo "$SECRET_JSON" | grep -o '"host":"[^"]*"' | cut -d'"' -f4)
-            DB_PORT=$(echo "$SECRET_JSON" | grep -o '"port":"[^"]*"' | cut -d'"' -f4)
+            echo "Raw secret JSON: $SECRET_JSON"
+            
+            # Install jq for reliable JSON parsing
+            apk add --no-cache jq
+            
+            # Parse JSON using jq
+            DB_USER=$(echo "$SECRET_JSON" | jq -r '.username')
+            DB_PASSWORD=$(echo "$SECRET_JSON" | jq -r '.password')
+            DB_NAME=$(echo "$SECRET_JSON" | jq -r '.dbname')
+            DB_HOST=$(echo "$SECRET_JSON" | jq -r '.host')
+            DB_PORT=$(echo "$SECRET_JSON" | jq -r '.port')
             
             # Validate extracted values
             if [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ]; then
               echo "ERROR: Failed to parse secret values"
+              echo "DB_USER: $DB_USER"
+              echo "DB_NAME: $DB_NAME"
+              echo "DB_HOST: $DB_HOST"
+              echo "DB_PORT: $DB_PORT"
               exit 1
             fi
             
             echo "Successfully extracted all secret values"
             
             # Create Kubernetes Secret using kubectl
-            kubectl create secret generic chatbot-backend-db-credentials \
+            /tmp/kubectl create secret generic chatbot-backend-db-credentials \
               --from-literal=DB_USER="$DB_USER" \
               --from-literal=DB_PASSWORD="$DB_PASSWORD" \
               --from-literal=DB_NAME="$DB_NAME" \
               --from-literal=DB_HOST="$DB_HOST" \
               --from-literal=DB_PORT="$DB_PORT" \
-              --dry-run=client -o yaml | kubectl apply -f -
+              --dry-run=client -o yaml | /tmp/kubectl apply -f -
             
             if [ $? -eq 0 ]; then
               echo "Successfully created/updated Kubernetes Secret"
