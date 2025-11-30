@@ -162,10 +162,6 @@ spec:
             # Validate extracted values
             if [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ]; then
               echo "ERROR: Failed to parse secret values"
-              echo "DB_USER: $DB_USER"
-              echo "DB_NAME: $DB_NAME"
-              echo "DB_HOST: $DB_HOST"
-              echo "DB_PORT: $DB_PORT"
               exit 1
             fi
             
