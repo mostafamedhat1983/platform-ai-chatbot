@@ -1,0 +1,21 @@
+# ========================================
+# Frontend Service
+# ========================================
+# ClusterIP service for frontend pods
+# Used by Gateway API to route traffic
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot-frontend-service
+  labels:
+    app: chatbot-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: chatbot-frontend
+  ports:
+  - name: http
+    port: 8501
+    targetPort: 8501
+    protocol: TCP
