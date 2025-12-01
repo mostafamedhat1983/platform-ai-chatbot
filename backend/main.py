@@ -12,6 +12,9 @@ import aiomysql
 import boto3
 from botocore.exceptions import ClientError
 import logging
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +47,11 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS configuration
 app.add_middleware(
@@ -265,6 +273,7 @@ async def health_check():
     return health_status
 
 @app.post("/chat", response_model=ChatResponse)
+@limiter.limit("5/minute")  # 5 requests per minute per IP address
 async def chat(request: ChatRequest):
     """
     Chat endpoint that processes user messages and returns AI responses
