@@ -38,6 +38,10 @@ frontend:
   image: frontend:latest  # TODO: Update with ECR image URL
   port: 8501
   
+  # Pod Disruption Budget
+  pdb:
+    minAvailable: 1  # Minimum pods available during disruptions
+  
   # Resource allocation
   resources:
     requests:

@@ -1,0 +1,105 @@
+# ========================================
+# Frontend Deployment
+# ========================================
+# Streamlit frontend deployment for chatbot UI
+# Connects to FastAPI backend via internal service
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-frontend-deployment
+  labels:
+    app: chatbot-frontend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  
+  # ========================================
+  # Update Strategy
+  # ========================================
+  # Rolling update: one pod down max, one pod surge max
+  # Ensures zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  
+  selector:
+    matchLabels:
+      app: chatbot-frontend
+  
+  template:
+    metadata:
+      labels:
+        app: chatbot-frontend
+    spec:
+      # ========================================
+      # Pod Scheduling
+      # ========================================
+      # Prefer spreading pods across different nodes for availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: chatbot-frontend
+              topologyKey: kubernetes.io/hostname
+      
+      containers:
+      - name: frontend-container
+        image: {{ .Values.frontend.image }}
+        
+        # ========================================
+        # Security Context
+        # ========================================
+        # Run as non-root user (UID 1000) with no privilege escalation
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+        
+        ports:
+        - containerPort: {{ .Values.frontend.port }}
+        
+        # ========================================
+        # Environment Variables
+        # ========================================
+        # Backend API URL for frontend to connect
+        env:
+        - name: API_BASE_URL
+          value: "http://chatbot-backend-service:8000"
+        
+        # ========================================
+        # Health Checks
+        # ========================================
+        # Liveness: restart pod if unhealthy after 60s (Streamlit slower startup)
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.frontend.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        
+        # Readiness: route traffic only when ready (10s check for Streamlit)
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.frontend.port }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        
+        # ========================================
+        # Resource Limits
+        # ========================================
+        # Requests: guaranteed resources
+        # Limits: maximum allowed resources
+        resources:
+          requests:
+            memory: {{ .Values.frontend.resources.requests.memory }}
+            cpu: {{ .Values.frontend.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.frontend.resources.limits.memory }}
+            cpu: {{ .Values.frontend.resources.limits.cpu }}
