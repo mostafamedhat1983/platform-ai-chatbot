@@ -60,6 +60,9 @@ spec:
           runAsGroup: 1000
           allowPrivilegeEscalation: false
           runAsNonRoot: true
+          capabilities:
+            drop:
+              - ALL
         
         ports:
         - containerPort: {{ .Values.frontend.port }}
