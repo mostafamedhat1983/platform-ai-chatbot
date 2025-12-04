@@ -50,7 +50,8 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **End-to-End Encryption:** SSL/TLS for RDS connections, HTTPS for AWS API calls, encrypted EBS volumes
 - **Pod Identity:** AWS authentication without static credentials, tokens, or OIDC configuration files
 - **Least Privilege IAM:** Backend restricted to `bedrock:InvokeModel` on specific model ARN only
-- **Security Context:** Non-root containers (UID 1000) with privilege escalation disabled
+- **Linux Capabilities:** All capabilities dropped (capabilities.drop: ALL) for defense against container breakout
+- **Security Context:** Non-root containers (UID 1000) with privilege escalation disabled and all Linux capabilities dropped
 - **Resource Isolation:** Memory/CPU requests and limits prevent resource exhaustion and noisy neighbor attacks
 
 **Code Quality:**
@@ -296,6 +297,7 @@ Frontend and backend application code generated with **Claude Sonnet 4.5** to ac
 5. Async MySQL connection pooling essential for scalable database access under concurrent AI request load
 6. Secrets encrypted at rest (KMS), in transit (TLS 1.2+), and in use (memory-only) ensures zero credential exposure
 7. Non-root containers with resource limits prevent privilege escalation and resource exhaustion attacks
+8. Dropping all Linux capabilities provides defense-in-depth against container breakout exploits
 
 ## 🤝 Contributing
 
