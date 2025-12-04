@@ -2,8 +2,8 @@
 # Frontend Pod Disruption Budget
 # ========================================
 # Ensures minimum pods available during voluntary disruptions
-# Dev: minAvailable 1 (with 1 replica) prevents pod termination during updates
-# Prod: minAvailable 1 (with 2+ replicas) allows 1 pod down during updates
+# Dev: minAvailable 1 (with 2 replicas) allows 1 pod down during updates
+# Prod: minAvailable 1 (with 3 replicas) allows 2 pods down during updates
 
 apiVersion: policy/v1
 kind: PodDisruptionBudget

@@ -261,13 +261,16 @@ Helm charts support ArgoCD/FluxCD for declarative deployments with automatic syn
 ## 📊 Resource Configuration
 
 **Development Environment:**
-- Backend: 1 replica, 128Mi-256Mi memory, 100m-200m CPU
-- Frontend: 1 replica, 128Mi-256Mi memory, 100m-200m CPU
-- Total: ~512Mi memory, ~400m CPU per environment
+- Backend: 2 replicas, 128Mi-256Mi memory, 100m-200m CPU
+- Frontend: 2 replicas, 128Mi-256Mi memory, 100m-200m CPU
+- HPA: 2-5 replicas based on CPU (75% target)
+- Total: ~1GB memory, ~800m CPU per environment
 
 **Production Environment:**
-- Backend: 2+ replicas (HA), same resource limits
-- Pod Disruption Budget: Minimum 1 pod available during disruptions
+- Backend: 3 replicas, 256Mi-512Mi memory, 200m-500m CPU
+- Frontend: 3 replicas, 256Mi-512Mi memory, 200m-500m CPU
+- HPA: 3-7 replicas based on CPU (70% target)
+- Pod Disruption Budget: Minimum 2 pods available during disruptions
 - Anti-affinity: Prefer different nodes for replica distribution
 
 ## 🔮 Future Enhancements
@@ -276,10 +279,8 @@ Helm charts support ArgoCD/FluxCD for declarative deployments with automatic syn
 Replace init containers with External Secrets Operator for automatic secret rotation and centralized secret management across multiple secrets sources (Secrets Manager, Parameter Store, Vault).
 
 **Additional Planned Enhancements:**
-- Horizontal Pod Autoscaler (HPA) based on CPU/memory metrics
 - Network policies for pod-to-pod communication restrictions
 - Prometheus metrics export for observability
-- Ingress/ALB for production-grade load balancing
 - Rate limiting and request throttling
 - Multi-region deployment for disaster recovery
 - A/B testing infrastructure for model comparison
