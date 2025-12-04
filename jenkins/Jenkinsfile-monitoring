@@ -1,0 +1,100 @@
+// Monitoring Stack Deployment (Run ONCE per cluster)
+// Deploys Metrics Server and Prometheus/Grafana
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ['sleep']
+    args: ['infinity']
+  - name: helm
+    image: alpine/helm:latest
+    command: ['sleep']
+    args: ['infinity']
+"""
+        }
+    }
+    
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'prod'], description: 'Target environment')
+    }
+    
+    environment {
+        MONITORING_NS = 'monitoring'
+    }
+    
+    stages {
+        stage('Deploy Metrics Server') {
+            steps {
+                container('kubectl') {
+                    sh """
+                        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+                        kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=300s
+                        sleep 30
+                        kubectl top nodes || echo "Metrics not ready yet"
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy Prometheus Stack') {
+            steps {
+                container('helm') {
+                    sh """
+                        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+                        helm repo update
+                        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+                          --namespace ${MONITORING_NS} \
+                          --create-namespace \
+                          --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+                          --set grafana.adminPassword=admin \
+                          --set grafana.service.type=ClusterIP \
+                          --wait --timeout 10m
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy Grafana Ingress') {
+            steps {
+                container('helm') {
+                    sh """
+                        helm upgrade --install grafana-ingress ./k8s \
+                          -f k8s/values-\${ENVIRONMENT}.yaml \
+                          --set chatbot.ingress.enabled=false \
+                          --set grafana.ingress.enabled=true
+                    """
+                }
+            }
+        }
+        
+        stage('Verify & Get Access') {
+            steps {
+                container('kubectl') {
+                    sh """
+                        kubectl wait --for=condition=ready pod --all -n ${MONITORING_NS} --timeout=300s
+                        echo "\\n=== Grafana Access ==="
+                        kubectl get ingress grafana-ingress -n ${MONITORING_NS}
+                        echo "URL: https://grafana.mostafa-medhat.online (after DNS setup)"
+                        echo "Credentials: admin / admin"
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "✅ Monitoring stack deployed. Access Grafana and verify metrics collection."
+        }
+        failure {
+            echo "❌ Deployment failed"
+        }
+    }
+}

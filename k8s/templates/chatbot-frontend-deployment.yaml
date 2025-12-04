@@ -73,7 +73,7 @@ spec:
         # Backend API URL for frontend to connect
         env:
         - name: API_BASE_URL
-          value: "http://chatbot-backend-service:8000"
+          value: "http://chatbot-backend-service:{{ .Values.backend.port }}"
         
         # ========================================
         # Health Checks

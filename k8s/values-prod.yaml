@@ -16,8 +16,13 @@ replicaCount: 3  # High availability with 3 pods
 # ========================================
 backend:
   image: backend:prod  # TODO: Update with ECR prod image URL
+  port: 8000
   pdb:
     minAvailable: 2  # Keep 2 pods running during disruptions
+  hpa:
+    minReplicas: 3
+    maxReplicas: 7
+    targetCPU: 70
   resources:
     requests:
       memory: "256Mi"  # Higher resources for production load
@@ -31,6 +36,7 @@ backend:
 # ========================================
 frontend:
   image: frontend:prod  # TODO: Update with ECR prod image URL
+  port: 8501
   resources:
     requests:
       memory: "256Mi"
@@ -38,3 +44,18 @@ frontend:
     limits:
       memory: "512Mi"
       cpu: "500m"
+
+# ========================================
+# Ingress Configuration
+# ========================================
+chatbot:
+  ingress:
+    enabled: true
+    host: chatbot.mostafa-medhat.online
+    certificateArn: arn:aws:acm:us-east-2:586794447516:certificate/1696ca3e-e5ac-477d-b872-e579133f660c
+
+grafana:
+  ingress:
+    enabled: true
+    host: grafana.mostafa-medhat.online
+    certificateArn: arn:aws:acm:us-east-2:586794447516:certificate/1696ca3e-e5ac-477d-b872-e579133f660c

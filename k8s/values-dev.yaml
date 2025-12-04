@@ -16,8 +16,13 @@ replicaCount: 2  # Test HA with minimal cost
 # ========================================
 backend:
   image: backend:dev  # TODO: Update with ECR dev image URL
+  port: 8000
   pdb:
     minAvailable: 1  # Keep 1 pod running during disruptions
+  hpa:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPU: 75
   resources:
     requests:
       memory: "128Mi"  # Minimal resources for dev
@@ -31,6 +36,7 @@ backend:
 # ========================================
 frontend:
   image: frontend:dev  # TODO: Update with ECR dev image URL
+  port: 8501
   resources:
     requests:
       memory: "128Mi"
@@ -38,3 +44,18 @@ frontend:
     limits:
       memory: "256Mi"
       cpu: "200m"
+
+# ========================================
+# Ingress Configuration
+# ========================================
+chatbot:
+  ingress:
+    enabled: true
+    host: chatbot.mostafa-medhat.online
+    certificateArn: arn:aws:acm:us-east-2:586794447516:certificate/1696ca3e-e5ac-477d-b872-e579133f660c
+
+grafana:
+  ingress:
+    enabled: true
+    host: grafana.mostafa-medhat.online
+    certificateArn: arn:aws:acm:us-east-2:586794447516:certificate/1696ca3e-e5ac-477d-b872-e579133f660c
