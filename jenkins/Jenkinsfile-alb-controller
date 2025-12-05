@@ -8,7 +8,7 @@ spec:
   serviceAccountName: jenkins-sa
   containers:
   - name: helm
-    image: alpine/helm:latest
+    image: alpine/k8s:1.30.7
     command: ['cat']
     tty: true
 '''
