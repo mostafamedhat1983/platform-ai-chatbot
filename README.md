@@ -253,6 +253,59 @@ kubectl port-forward service/chatbot-frontend 8501:8501
 - Helm deployment: ~2-3 min
 - Pod startup: ~30-60 sec (includes init container secrets fetch)
 
+## 🌐 DNS and SSL Certificate Setup
+
+**Before deploying applications, configure DNS and SSL:**
+
+**1. Request SSL Certificate (ACM):**
+```bash
+aws acm request-certificate \
+  --domain-name "*.your-domain.com" \
+  --validation-method DNS \
+  --region us-east-2
+```
+
+**2. Add DNS Validation CNAME:**
+- Get validation record from ACM
+- Add CNAME to domain provider (Namecheap, Route 53, etc.)
+- Wait for certificate status: ISSUED (~5-30 min)
+
+**3. Deploy Applications (creates ALBs):**
+- Run ALB controller pipeline
+- Run monitoring pipeline → creates Grafana ingress + ALB
+- Run application pipeline → creates chatbot ingress + ALB (or uses shared ALB)
+
+**4. Get ALB DNS Names:**
+```bash
+kubectl get ingress --all-namespaces
+```
+
+**5. Configure DNS Records:**
+
+**Dev (1 shared ALB - cost optimized):**
+```
+chatbot.your-domain.com → CNAME → k8s-platformsharedalb-xxx.elb.amazonaws.com
+grafana.your-domain.com → CNAME → k8s-platformsharedalb-xxx.elb.amazonaws.com
+```
+
+**Prod (2 separate ALBs - isolation):**
+```
+chatbot.your-domain.com → CNAME → k8s-chatbot-xxx.elb.amazonaws.com
+grafana.your-domain.com → CNAME → k8s-grafana-xxx.elb.amazonaws.com
+```
+
+**6. Verify:**
+```bash
+curl -I https://chatbot.your-domain.com
+curl -I https://grafana.your-domain.com
+```
+
+**ALB Strategy:**
+- **Dev:** 1 shared ALB (~$16/month) - both apps use same ALB with hostname-based routing
+- **Prod:** 2 separate ALBs (~$32/month) - isolation, independent scaling, better security
+
+[Complete DNS/SSL guide →](../terraform-aws-eks/docs/dns-certificate-setup.md)
+
 ## 🔄 CI/CD Integration
 
 **Jenkins Pipeline:**
