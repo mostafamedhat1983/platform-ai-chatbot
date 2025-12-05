@@ -273,27 +273,27 @@ async def health_check():
 
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit("5/minute")  # 5 requests per minute per IP address
-async def chat(http_request: Request, request: ChatRequest):
+async def chat(request: Request, chat_request: ChatRequest):
     """
     Chat endpoint that processes user messages and returns AI responses
     """
     try:
         # Generate or use existing session ID
-        session_id = request.session_id or str(uuid.uuid4())
+        session_id = chat_request.session_id or str(uuid.uuid4())
         
         # Get conversation history for context
         conversation_history = await get_conversation_history(session_id)
         
         # Call DeepSeek
         ai_response = await call_deepseek(
-            message=request.message,
+            message=chat_request.message,
             conversation_history=conversation_history
         )
         
         # Save conversation to database
         await save_conversation(
             session_id=session_id,
-            user_message=request.message,
+            user_message=chat_request.message,
             ai_response=ai_response
         )
         
