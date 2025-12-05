@@ -27,12 +27,16 @@ spec:
                         def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
                         
                         sh """
+                            # Get VPC ID
+                            VPC_ID=\$(kubectl get nodes -o jsonpath='{.items[0].spec.providerID}' | cut -d'/' -f5 | xargs aws ec2 describe-instances --instance-ids --query 'Reservations[0].Instances[0].VpcId' --output text --region ${AWS_REGION})
+                            
                             helm repo add eks https://aws.github.io/eks-charts
                             helm repo update
                             
                             helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
                               -n kube-system \
                               --set clusterName=${clusterName} \
+                              --set vpcId=\${VPC_ID} \
                               --set serviceAccount.create=true \
                               --set serviceAccount.name=aws-load-balancer-controller
                         """
