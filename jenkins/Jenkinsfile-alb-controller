@@ -14,16 +14,27 @@ spec:
         }
     }
     
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'prod'], description: 'Target environment')
+    environment {
+        AWS_REGION = 'us-east-2'
     }
     
     stages {
+        stage('Configure kubectl') {
+            steps {
+                container('helm') {
+                    script {
+                        def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
+                        sh "aws eks update-kubeconfig --name ${clusterName} --region ${AWS_REGION}"
+                    }
+                }
+            }
+        }
+        
         stage('Install AWS Load Balancer Controller') {
             steps {
                 container('helm') {
                     script {
-                        def clusterName = params.ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
+                        def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
                         
                         sh """
                             helm repo add eks https://aws.github.io/eks-charts
