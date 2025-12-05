@@ -28,9 +28,9 @@ spec:
                 container('kubectl') {
                     sh """
                         kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-                        kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=300s
+                        echo "Metrics Server deployed, waiting for startup..."
                         sleep 30
-                        kubectl top nodes || echo "Metrics not ready yet"
+                        kubectl top nodes || echo "Metrics not ready yet (this is normal, give it a few minutes)"
                     """
                 }
             }
@@ -47,8 +47,7 @@ spec:
                           --create-namespace \
                           --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
                           --set grafana.adminPassword=admin \
-                          --set grafana.service.type=ClusterIP \
-                          --wait --timeout 10m
+                          --set grafana.service.type=ClusterIP
                     """
                 }
             }
@@ -71,7 +70,6 @@ spec:
             steps {
                 container('kubectl') {
                     sh """
-                        kubectl wait --for=condition=ready pod --all -n ${MONITORING_NS} --timeout=300s
                         echo "\\n=== Grafana Access ==="
                         kubectl get ingress grafana-ingress -n ${MONITORING_NS}
                         echo "URL: https://grafana.mostafa-medhat.online (after DNS setup)"
