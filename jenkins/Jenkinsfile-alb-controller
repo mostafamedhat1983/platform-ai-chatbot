@@ -45,14 +45,9 @@ spec:
             steps {
                 container('helm') {
                     sh """
-                        echo "Waiting for controller pods to be ready..."
-                        kubectl wait --for=condition=ready pod \
-                          -l app.kubernetes.io/name=aws-load-balancer-controller \
-                          -n kube-system \
-                          --timeout=120s
-                        
                         echo "AWS Load Balancer Controller installed successfully!"
                         kubectl get deployment -n kube-system aws-load-balancer-controller
+                        kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
                     """
                 }
             }
