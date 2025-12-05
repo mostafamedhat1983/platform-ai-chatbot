@@ -19,17 +19,6 @@ spec:
     }
     
     stages {
-        stage('Configure kubectl') {
-            steps {
-                container('helm') {
-                    script {
-                        def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
-                        sh "aws eks update-kubeconfig --name ${clusterName} --region ${AWS_REGION}"
-                    }
-                }
-            }
-        }
-        
         stage('Install AWS Load Balancer Controller') {
             steps {
                 container('helm') {

@@ -22,22 +22,10 @@ spec:
     }
     
     environment {
-        AWS_REGION = 'us-east-2'
         MONITORING_NS = 'monitoring'
     }
     
     stages {
-        stage('Configure kubectl') {
-            steps {
-                container('kubectl') {
-                    script {
-                        def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
-                        sh "aws eks update-kubeconfig --name ${clusterName} --region ${AWS_REGION}"
-                    }
-                }
-            }
-        }
-        
         stage('Deploy Metrics Server') {
             steps {
                 container('kubectl') {

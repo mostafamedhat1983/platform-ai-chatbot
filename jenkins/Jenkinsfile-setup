@@ -1,0 +1,34 @@
+// One-time setup pipeline
+// Configures kubectl context for Jenkins to use Kubernetes agents
+
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-2'
+    }
+    
+    stages {
+        stage('Configure kubectl') {
+            steps {
+                script {
+                    def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
+                    sh """
+                        aws eks update-kubeconfig --name ${clusterName} --region ${AWS_REGION}
+                        kubectl config current-context
+                        kubectl get nodes
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "✅ kubectl configured for ${TARGET_ENVIRONMENT}. You can now run other pipelines with Kubernetes agents."
+        }
+        failure {
+            echo "❌ Setup failed"
+        }
+    }
+}
