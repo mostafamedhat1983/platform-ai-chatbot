@@ -27,7 +27,7 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 **Deployment Stack:**
 - **Container Orchestration:** Kubernetes (EKS) with Helm charts
 - **AI Service:** AWS Bedrock DeepSeek V3.1 (serverless, pay-per-use)
-- **Database:** RDS MySQL with SSL/TLS encryption and Multi-AZ (prod)
+- **Database:** RDS MySQL with Multi-AZ (prod)
 - **Security:** Pod Identity for AWS authentication, init containers for secrets, RBAC
 - **Reliability:** Pod Disruption Budgets, rolling updates, health checks, auto-restart
 
@@ -68,7 +68,7 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Cloud-Native Development:** Containerized microservices, Kubernetes deployments, Helm charts, Pod Identity
 - **AI Integration:** AWS Bedrock API integration, prompt engineering, conversation context management
 - **Backend Engineering:** FastAPI async APIs, Pydantic validation, MySQL connection pooling, error handling
-- **Security:** SSL/TLS encryption, init container secrets, Pod Identity, RBAC, zero credential exposure
+- **Security:** Init container secrets, Pod Identity, RBAC, zero credential exposure
 - **Reliability:** Health checks, rolling updates, PDBs, graceful shutdown, automatic restart, session persistence
 
 ## 📁 Project Structure
@@ -112,7 +112,6 @@ Every layer designed to ensure credentials are **always safe** through comprehen
 
 **2. Encrypted in Transit (TLS 1.2+):**
 - Init container fetches secrets via AWS API over HTTPS
-- MySQL connections use SSL/TLS encryption end-to-end
 - All AWS service calls (Bedrock, Secrets Manager) encrypted in transit
 
 **3. Encrypted in Use (Memory-Only):**
@@ -139,7 +138,6 @@ Evaluated AWS Secrets Store CSI Driver but chose init containers for:
 
 ### Database Security
 
-- **SSL/TLS Connections:** All MySQL traffic encrypted end-to-end (backend → RDS)
 - **Encrypted Storage:** RDS volumes encrypted with KMS (managed in infrastructure repository)
 - **Network Isolation:** RDS in private subnets, no public internet access
 - **Connection Pooling:** Credentials reused across pooled connections without re-fetch

@@ -96,8 +96,7 @@ async def create_db_pool():
             db=DB_CONFIG['db'],
             autocommit=DB_CONFIG['autocommit'],
             minsize=1,
-            maxsize=10,
-            ssl=True,  # Enable SSL/TLS encryption for RDS connection
+            maxsize=10
         )
         logger.info("Database pool created successfully with SSL/TLS")
         return pool
