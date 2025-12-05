@@ -26,7 +26,7 @@ spec:
                 container('kubectl') {
                     script {
                         def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
-                        def vpcName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev-vpc' : 'platform-prod-vpc'
+                        def vpcName = env.TARGET_ENVIRONMENT == 'dev' ? 'vpc-dev' : 'vpc-prod'
                         
                         sh """
                             apk add --no-cache aws-cli
