@@ -6,20 +6,6 @@ pipeline {
     }
     
     stages {
-        stage('Get VPC ID') {
-            agent any
-            steps {
-                script {
-                    def vpcName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev-vpc' : 'platform-prod-vpc'
-                    env.VPC_ID = sh(
-                        script: "aws ec2 describe-vpcs --filters 'Name=tag:Name,Values=${vpcName}' --query 'Vpcs[0].VpcId' --output text --region ${AWS_REGION}",
-                        returnStdout: true
-                    ).trim()
-                    echo "Found VPC ID: ${env.VPC_ID}"
-                }
-            }
-        }
-        
         stage('Install AWS Load Balancer Controller') {
             agent {
                 kubernetes {
@@ -29,7 +15,7 @@ kind: Pod
 spec:
   serviceAccountName: jenkins-sa
   containers:
-  - name: helm
+  - name: kubectl
     image: alpine/k8s:1.30.7
     command: ['cat']
     tty: true
@@ -37,18 +23,24 @@ spec:
                 }
             }
             steps {
-                container('helm') {
+                container('kubectl') {
                     script {
                         def clusterName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev' : 'platform-prod'
+                        def vpcName = env.TARGET_ENVIRONMENT == 'dev' ? 'platform-dev-vpc' : 'platform-prod-vpc'
                         
                         sh """
+                            apk add --no-cache aws-cli
+                            
+                            VPC_ID=\$(aws ec2 describe-vpcs --filters 'Name=tag:Name,Values=${vpcName}' --query 'Vpcs[0].VpcId' --output text --region ${AWS_REGION})
+                            echo "Found VPC ID: \$VPC_ID"
+                            
                             helm repo add eks https://aws.github.io/eks-charts
                             helm repo update
                             
                             helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \\
                               -n kube-system \\
                               --set clusterName=${clusterName} \\
-                              --set vpcId=${env.VPC_ID} \\
+                              --set vpcId=\$VPC_ID \\
                               --set serviceAccount.create=true \\
                               --set serviceAccount.name=aws-load-balancer-controller
                         """
@@ -66,7 +58,7 @@ kind: Pod
 spec:
   serviceAccountName: jenkins-sa
   containers:
-  - name: helm
+  - name: kubectl
     image: alpine/k8s:1.30.7
     command: ['cat']
     tty: true
@@ -74,7 +66,7 @@ spec:
                 }
             }
             steps {
-                container('helm') {
+                container('kubectl') {
                     sh """
                         echo "AWS Load Balancer Controller installed successfully!"
                         kubectl get deployment -n kube-system aws-load-balancer-controller
