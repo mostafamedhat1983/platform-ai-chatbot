@@ -57,10 +57,7 @@ spec:
             steps {
                 container('kubectl') {
                     sh """
-                        helm upgrade --install grafana-ingress ./k8s \
-                          -f k8s/values-${TARGET_ENVIRONMENT}.yaml \
-                          --set chatbot.ingress.enabled=false \
-                          --set grafana.ingress.enabled=true
+                        kubectl apply -f k8s/grafana-ingress.yaml
                     """
                 }
             }
