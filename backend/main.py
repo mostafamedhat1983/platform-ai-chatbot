@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import aiomysql
@@ -273,7 +273,7 @@ async def health_check():
 
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit("5/minute")  # 5 requests per minute per IP address
-async def chat(request: ChatRequest):
+async def chat(http_request: Request, request: ChatRequest):
     """
     Chat endpoint that processes user messages and returns AI responses
     """
