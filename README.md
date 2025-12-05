@@ -83,17 +83,26 @@ platform-ai-chatbot/
 │   ├── app.py               # Streamlit UI with session management
 │   ├── Dockerfile           # Frontend container image
 │   └── requirements.txt     # Python dependencies
+├── jenkins/
+│   ├── Jenkinsfile                  # Application CI/CD pipeline
+│   ├── Jenkinsfile-setup            # kubectl context configuration
+│   ├── Jenkinsfile-alb-controller   # ALB controller deployment
+│   └── Jenkinsfile-monitoring       # Monitoring stack deployment
 └── k8s/
     ├── Chart.yaml           # Helm chart metadata
     ├── values.yaml          # Default Helm values
     ├── values-dev.yaml      # Development overrides
     ├── values-prod.yaml     # Production overrides
+    ├── grafana-ingress.yaml # Grafana ALB ingress (used by monitoring pipeline)
     └── templates/
         ├── chatbot-backend-deployment.yaml      # Backend pods
         ├── chatbot-backend-service.yaml         # Backend K8s service
         ├── chatbot-backend-service-account.yaml # Pod Identity
         ├── chatbot-backend-rbac.yaml            # RBAC permissions
-        └── chatbot-backend-pdb.yaml             # Disruption budget
+        ├── chatbot-backend-pdb.yaml             # Disruption budget
+        ├── chatbot-frontend-deployment.yaml     # Frontend pods
+        ├── chatbot-frontend-service.yaml        # Frontend K8s service
+        └── chatbot-ingress.yaml                 # Chatbot ALB ingress
 ```
 
 ## 🔒 Security Architecture

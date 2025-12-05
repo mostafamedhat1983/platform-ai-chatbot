@@ -98,7 +98,7 @@ async def create_db_pool():
             minsize=1,
             maxsize=10
         )
-        logger.info("Database pool created successfully with SSL/TLS")
+        logger.info("Database pool created successfully")
         return pool
     except Exception as e:
         logger.error(f"Failed to create database pool: {str(e)}")

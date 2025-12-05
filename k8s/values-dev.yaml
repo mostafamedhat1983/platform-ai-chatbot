@@ -15,7 +15,7 @@ replicaCount: 2  # Test HA with minimal cost
 # Backend Service
 # ========================================
 backend:
-  image: backend:dev  # TODO: Update with ECR dev image URL
+  image: backend:dev  # Overridden by Jenkins pipeline with --set backend.image
   port: 8000
   pdb:
     minAvailable: 1  # Keep 1 pod running during disruptions
@@ -35,7 +35,7 @@ backend:
 # Frontend Service
 # ========================================
 frontend:
-  image: frontend:dev  # TODO: Update with ECR dev image URL
+  image: frontend:dev  # Overridden by Jenkins pipeline with --set frontend.image
   port: 8501
   resources:
     requests:
