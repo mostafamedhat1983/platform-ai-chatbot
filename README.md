@@ -167,8 +167,8 @@ Architecture choices made through research and hands-on evaluation:
 - AWS Bedrock model access (DeepSeek V3.1 in us-east-2)
 - ECR repository for container images
 - Secrets Manager with RDS credentials (created during infrastructure setup)
-- kubectl configured for EKS cluster access
-- Helm 3.x installed
+- Jenkins configured with Kubernetes plugin and kubectl access
+- Helm 3.x installed on Jenkins EC2
 
 **1. Build and Push Container Images:**
 
@@ -248,12 +248,36 @@ kubectl port-forward service/chatbot-frontend 8501:8501
 
 ## 🔄 CI/CD Integration
 
-**Jenkins Pipeline (Planned):**
-1. Checkout code from Git
-2. Build Docker images with versioned tags
-3. Push to ECR with automated authentication
-4. Run Helm upgrade with environment-specific values
-5. Verify deployment health and rollback on failure
+**Jenkins Pipeline:**
+
+Automated deployment via Jenkins with 4 pipelines:
+
+**0. Setup Pipeline (Jenkinsfile-setup):**
+- Configures kubectl context on Jenkins EC2
+- Run once per environment or when switching between dev/prod
+- Enables Kubernetes agent pods for all other pipelines
+
+**1. ALB Controller Pipeline (Jenkinsfile-alb-controller):**
+- Deploys AWS Load Balancer Controller to EKS
+- Enables automatic ALB provisioning for Ingress resources
+- Run once per environment
+
+**2. Monitoring Stack Pipeline (Jenkinsfile-monitoring):**
+- Deploys Metrics Server (for HPA), Prometheus, and Grafana
+- Configures Grafana ingress with ALB
+- Run once per environment
+
+**3. Application Pipeline (Jenkinsfile):**
+- Builds Docker images with versioned tags
+- Pushes to ECR with automated authentication
+- Deploys with Helm using environment-specific values
+- Verifies deployment health
+- Triggered automatically on Git commits
+
+**Environment Management:**
+- Global `TARGET_ENVIRONMENT` variable (dev/prod) set in Jenkins
+- All pipelines use Kubernetes agents (run as pods on EKS)
+- Single source of truth for environment configuration
 
 **GitOps Alternative:**
 Helm charts support ArgoCD/FluxCD for declarative deployments with automatic sync from Git.
