@@ -41,6 +41,8 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Init Container Secrets** - DB credentials fetched at pod startup for improved debugging visibility
 - **Multi-Environment Helm Deployment** - Single chart deploys dev/prod using values-dev.yaml and values-prod.yaml
 - **Security Context** - Non-root containers (UID 1000) with privilege escalation disabled
+- **Network Policies** - Zero-trust pod communication (default deny, explicit allow)
+- **Vulnerability Scanning** - Trivy scans in CI/CD pipeline (fails on CRITICAL, reports HIGH/MEDIUM/LOW)
 - **Health Probes** - Liveness (restart unhealthy pods after 30s) and readiness (traffic routing control after 5s)
 - **Rolling Updates** - Zero-downtime deployments (MaxUnavailable=1, MaxSurge=1)
 - **High Availability** - PodAntiAffinity spreads replicas across nodes, PodDisruptionBudget ensures minimum availability during node maintenance
@@ -49,6 +51,8 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Zero Credential Exposure:** Secrets always encrypted (at rest in Secrets Manager with KMS, in transit via TLS 1.2+, in use loaded to memory only), never in code, images, manifests, or disk
 - **End-to-End Encryption:** SSL/TLS for RDS connections, HTTPS for AWS API calls, encrypted EBS volumes
 - **Pod Identity:** AWS authentication without static credentials, tokens, or OIDC configuration files
+- **Network Policies:** Zero-trust networking (default deny all, backend accepts only frontend traffic, frontend sends only to backend)
+- **Vulnerability Scanning:** Automated Trivy scans in CI/CD (blocks CRITICAL vulnerabilities, archives reports)
 - **Least Privilege IAM:** Backend restricted to `bedrock:InvokeModel` on specific model ARN only
 - **Linux Capabilities:** All capabilities dropped (capabilities.drop: ALL) for defense against container breakout
 - **Security Context:** Non-root containers (UID 1000) with privilege escalation disabled and all Linux capabilities dropped
@@ -102,7 +106,10 @@ platform-ai-chatbot/
         ├── chatbot-backend-pdb.yaml             # Disruption budget
         ├── chatbot-frontend-deployment.yaml     # Frontend pods
         ├── chatbot-frontend-service.yaml        # Frontend K8s service
-        └── chatbot-ingress.yaml                 # Chatbot ALB ingress
+        ├── chatbot-ingress.yaml                 # Chatbot ALB ingress
+        ├── network-policy-default-deny.yaml     # Default deny all traffic
+        ├── network-policy-backend.yaml          # Backend network rules
+        └── network-policy-frontend.yaml         # Frontend network rules
 ```
 
 ## 🔒 Security Architecture
@@ -154,7 +161,7 @@ Evaluated AWS Secrets Store CSI Driver but chose init containers for:
 ### Kubernetes Security
 
 - **RBAC:** Service account permissions limited to required Kubernetes resources only
-- **Network Policies:** (Planned) Restrict pod-to-pod traffic to required services only
+- **Network Policies:** Zero-trust networking with default deny all, backend accepts ingress only from frontend, frontend egress only to backend + DNS
 
 ## 💡 Key Technical Decisions
 
@@ -360,7 +367,6 @@ Helm charts support ArgoCD/FluxCD for declarative deployments with automatic syn
 Replace init containers with External Secrets Operator for automatic secret rotation and centralized secret management across multiple secrets sources (Secrets Manager, Parameter Store, Vault).
 
 **Additional Planned Enhancements:**
-- Network policies for pod-to-pod communication restrictions
 - Prometheus metrics export for observability
 - Rate limiting and request throttling
 - Multi-region deployment for disaster recovery
@@ -380,6 +386,8 @@ Frontend and backend application code generated with **Claude Sonnet 4.5** to ac
 6. Secrets encrypted at rest (KMS), in transit (TLS 1.2+), and in use (memory-only) ensures zero credential exposure
 7. Non-root containers with resource limits prevent privilege escalation and resource exhaustion attacks
 8. Dropping all Linux capabilities provides defense-in-depth against container breakout exploits
+9. Network policies implement zero-trust (default deny, explicit allow) without infrastructure changes - pure Kubernetes resources
+10. Trivy vulnerability scanning in CI/CD catches security issues before production deployment
 
 ## 🤝 Contributing
 
