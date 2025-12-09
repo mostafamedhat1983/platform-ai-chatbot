@@ -166,145 +166,140 @@ Architecture choices made through research and hands-on evaluation:
 - **Multi-Environment Helm:** Single chart with environment-specific values files eliminates manifest duplication, supports GitOps workflows
 - **Session Persistence:** MySQL storage enables conversation continuity across pod restarts
 
-## 🚀 Deployment
+## 🚀 Complete Deployment Guide
 
-**Prerequisites:**
-- EKS cluster with Pod Identity enabled (see infrastructure repository)
-- RDS MySQL instance with SSL/TLS (see infrastructure repository)
-- AWS Bedrock model access (DeepSeek V3.1 in us-east-2)
-- ECR repository for container images
-- Secrets Manager with RDS credentials (created during infrastructure setup)
-- Jenkins configured with Kubernetes plugin and kubectl access
-- Helm 3.x installed on Jenkins EC2
+### Prerequisites
+- EKS cluster with Pod Identity (see terraform-aws-eks repository)
+- RDS MySQL with Secrets Manager credentials
+- AWS Bedrock DeepSeek V3.1 access in us-east-2
+- ECR repository: `platform-app`
+- Jenkins with Kubernetes plugin configured
+- Domain with DNS access (e.g., Namecheap)
 
-**1. Build and Push Container Images:**
+### Phase 1: SSL Certificate Setup
 
-```bash
-# Authenticate to ECR
-aws ecr get-login-password --region us-east-2 | \
-  docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-2.amazonaws.com
-
-# Build and push backend
-cd backend
-docker build -t <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:backend-v1.0.0 .
-docker push <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:backend-v1.0.0
-
-# Build and push frontend
-cd ../frontend
-docker build -t <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:frontend-v1.0.0 .
-docker push <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:frontend-v1.0.0
-```
-
-**2. Update Helm Values:**
-
-Edit `k8s/values-dev.yaml` or `k8s/values-prod.yaml`:
-```yaml
-backend:
-  image: <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:backend-v1.0.0
-
-frontend:
-  image: <account-id>.dkr.ecr.us-east-2.amazonaws.com/platform-app:frontend-v1.0.0
-```
-
-**3. Deploy with Helm:**
-
-```bash
-cd k8s
-
-# Development
-helm upgrade --install chatbot . \
-  -f values-dev.yaml \
-  --namespace default
-
-# Production
-helm upgrade --install chatbot . \
-  -f values-prod.yaml \
-  --namespace default
-```
-
-**4. Verify Deployment:**
-
-```bash
-# Check pod status
-kubectl get pods -l app=chatbot-backend
-
-# View backend logs
-kubectl logs -l app=chatbot-backend -c chatbot-backend
-
-# Check init container logs (secrets fetch)
-kubectl logs -l app=chatbot-backend -c fetch-secrets
-
-# Verify health
-kubectl exec -it <backend-pod> -- curl localhost:8000/health
-```
-
-**5. Access Application:**
-
-```bash
-# Port forward to access frontend locally
-kubectl port-forward service/chatbot-frontend 8501:8501
-
-# Open browser to http://localhost:8501
-```
-
-**Timing:**
-- Container builds: ~3-5 min
-- ECR push: ~1-2 min
-- Helm deployment: ~2-3 min
-- Pod startup: ~30-60 sec (includes init container secrets fetch)
-
-## 🌐 DNS and SSL Certificate Setup
-
-**Before deploying applications, configure DNS and SSL:**
-
-**1. Request SSL Certificate (ACM):**
+**1. Request Certificate:**
 ```bash
 aws acm request-certificate \
   --domain-name "*.your-domain.com" \
   --validation-method DNS \
   --region us-east-2
+# Note the CertificateArn
 ```
 
-**2. Add DNS Validation CNAME:**
-- Get validation record from ACM
-- Add CNAME to domain provider (Namecheap, Route 53, etc.)
-- Wait for certificate status: ISSUED (~5-30 min)
+**2. Add Validation CNAME:**
+- Get validation record: `aws acm describe-certificate --certificate-arn <arn>`
+- Add CNAME to domain DNS (e.g., Namecheap)
+- Wait for status: ISSUED (~5-30 min)
 
-**3. Deploy Applications (creates ALBs):**
-- Run ALB controller pipeline
-- Run monitoring pipeline → creates Grafana ingress + ALB
-- Run application pipeline → creates chatbot ingress + ALB (or uses shared ALB)
+**3. Update Ingress Annotations:**
+Update certificate ARN in `k8s/values-dev.yaml` and `k8s/values-prod.yaml`:
+```yaml
+chatbot:
+  ingress:
+    certificateArn: arn:aws:acm:us-east-2:xxx:certificate/xxx
+```
 
-**4. Get ALB DNS Names:**
+### Phase 2: Jenkins Pipeline Setup
+
+**Configure Jenkins Global Variable:**
+- Jenkins → Manage Jenkins → System → Global properties
+- Add: `TARGET_ENVIRONMENT` = `dev` (or `prod`)
+
+**Run Pipelines in Order:**
+
+**1. Setup Pipeline** (Jenkinsfile-setup)
+```
+Purpose: Configure kubectl on Jenkins EC2
+Runs on: Jenkins EC2 (agent any)
+Frequency: Once per environment
+```
+
+**2. ALB Controller Pipeline** (Jenkinsfile-alb-controller)
+```
+Purpose: Install AWS Load Balancer Controller
+Runs on: Kubernetes pod
+Frequency: Once per environment
+Creates: ALB controller (no ALBs yet)
+```
+
+**3. Monitoring Pipeline** (Jenkinsfile-monitoring)
+```
+Purpose: Deploy Metrics Server + Prometheus + Grafana
+Runs on: Kubernetes pod
+Frequency: Once per environment
+Creates: Grafana ingress → triggers first ALB creation
+```
+
+**4. Application Pipeline** (Jenkinsfile)
+```
+Purpose: Build images + deploy chatbot
+Runs on: Kubernetes pod
+Frequency: Automatic on Git commits
+Creates: Chatbot ingress → uses shared ALB (dev) or separate ALB (prod)
+```
+
+**Why 4 Pipelines?**
+- **Separation of concerns:** Infrastructure setup vs application deployment
+- **Different lifecycles:** Setup/ALB/monitoring run once, application runs continuously
+- **Different agents:** Setup needs Jenkins EC2 for kubectl config, others use ephemeral Kubernetes pods
+- **Easier troubleshooting:** Each pipeline has single responsibility
+
+### Phase 3: DNS Configuration
+
+**1. Get ALB DNS Names:**
 ```bash
 kubectl get ingress --all-namespaces
 ```
 
-**5. Configure DNS Records:**
+**2. Add CNAME Records:**
 
-**Dev (1 shared ALB - cost optimized):**
-```
-chatbot.your-domain.com → CNAME → k8s-platformsharedalb-xxx.elb.amazonaws.com
-grafana.your-domain.com → CNAME → k8s-platformsharedalb-xxx.elb.amazonaws.com
-```
+**Dev (1 shared ALB):**
+| Host    | Type  | Value                                    |
+|---------|-------|------------------------------------------|
+| chatbot | CNAME | k8s-platformsharedalb-xxx.elb.amazonaws.com |
+| grafana | CNAME | k8s-platformsharedalb-xxx.elb.amazonaws.com |
 
-**Prod (2 separate ALBs - isolation):**
-```
-chatbot.your-domain.com → CNAME → k8s-chatbot-xxx.elb.amazonaws.com
-grafana.your-domain.com → CNAME → k8s-grafana-xxx.elb.amazonaws.com
-```
+**Prod (2 separate ALBs):**
+| Host    | Type  | Value                                |
+|---------|-------|--------------------------------------|
+| chatbot | CNAME | k8s-chatbot-xxx.elb.amazonaws.com    |
+| grafana | CNAME | k8s-grafana-xxx.elb.amazonaws.com    |
 
-**6. Verify:**
+**Why Different ALB Strategies?**
+- **Dev:** 1 shared ALB saves cost (~$16/month), acceptable for non-production
+- **Prod:** 2 separate ALBs provide isolation, independent scaling (~$32/month)
+
+### Phase 4: Verification
+
 ```bash
+# Check DNS resolution
+nslookup chatbot.your-domain.com
+
+# Test HTTPS access
 curl -I https://chatbot.your-domain.com
 curl -I https://grafana.your-domain.com
+
+# Check pods
+kubectl get pods -l app=chatbot-backend
+kubectl get pods -l app=chatbot-frontend
+
+# View logs
+kubectl logs -l app=chatbot-backend -c chatbot-backend
+kubectl logs -l app=chatbot-backend -c fetch-secrets  # Init container
 ```
 
-**ALB Strategy:**
-- **Dev:** 1 shared ALB (~$16/month) - both apps use same ALB with hostname-based routing
-- **Prod:** 2 separate ALBs (~$32/month) - isolation, independent scaling, better security
+### Deployment Timing
+- SSL certificate validation: 5-30 min
+- Setup pipeline: 1 min
+- ALB controller pipeline: 3-5 min
+- Monitoring pipeline: 5-10 min
+- Application pipeline: 5-8 min
+- DNS propagation: 5-10 min
+- **Total first deployment:** ~30-60 min
+- **Subsequent deployments:** ~5-8 min (application pipeline only)
 
-[Complete DNS/SSL guide →](../terraform-aws-eks/docs/dns-certificate-setup.md)
+
 
 ## 🔄 CI/CD Integration
 
