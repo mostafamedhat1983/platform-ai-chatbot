@@ -192,6 +192,8 @@ Architecture choices made through research and hands-on evaluation:
 
 ### Phase 1: SSL Certificate Setup
 
+**With Custom Domain:**
+
 **1. Request Certificate:**
 ```bash
 aws acm request-certificate \
@@ -213,6 +215,8 @@ chatbot:
   ingress:
     certificateArn: arn:aws:acm:us-east-2:xxx:certificate/xxx
 ```
+
+**Without Custom Domain:** See [Deployment Without Custom Domain](#deployment-without-custom-domain) below
 
 ### Phase 2: Jenkins Pipeline Setup
 
@@ -344,6 +348,33 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 909
 ```
 
 
+
+## Deployment Without Custom Domain
+
+### Option 1: HTTP Only
+⚠️ No encryption - for testing only
+
+1. Skip Phase 1, update `k8s/values-dev.yaml`:
+   ```yaml
+   chatbot:
+     ingress:
+       annotations:
+         alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+   ```
+2. Deploy (Phase 2-4), access via: `http://k8s-chatbot-xxx.elb.amazonaws.com`
+
+### Option 2: Self-Signed Certificate
+⚠️ Browser warnings - for HTTPS testing
+
+1. Generate and upload:
+   ```bash
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=*.elb.amazonaws.com"
+   aws acm import-certificate --certificate fileb://tls.crt --private-key fileb://tls.key --region us-east-2
+   ```
+2. Update `k8s/values-dev.yaml` with certificateArn, deploy (Phase 2-4)
+3. Access: `https://k8s-chatbot-xxx.elb.amazonaws.com` (accept warning)
+
+**Production:** Use free domains (DuckDNS, Freenom) + Let's Encrypt via cert-manager.
 
 ## 🔄 CI/CD Integration
 
