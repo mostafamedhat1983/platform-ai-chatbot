@@ -28,7 +28,8 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Container Orchestration:** Kubernetes (EKS) with Helm charts
 - **AI Service:** AWS Bedrock DeepSeek V3.1 (serverless, pay-per-use)
 - **Database:** RDS MySQL with Multi-AZ (prod)
-- **Security:** Pod Identity for AWS authentication, init containers for secrets, RBAC
+- **Security:** Pod Identity for AWS authentication, init containers for secrets, RBAC, network policies, Falco runtime security
+- **Monitoring:** Prometheus, Grafana, Falco (security events)
 - **Reliability:** Pod Disruption Budgets, rolling updates, health checks, auto-restart
 
 ## 🛠️ What Makes This Different
@@ -306,6 +307,36 @@ kubectl logs -l app=chatbot-backend -c fetch-secrets  # Init container
 - **Total first deployment:** ~30-60 min
 - **Subsequent deployments:** ~5-8 min (application pipeline only)
 
+### Monitoring Access
+
+**Grafana (via ALB or port-forward):**
+```bash
+# Option 1: ALB (if DNS configured)
+https://grafana.your-domain.com
+# Credentials: admin / admin
+
+# Option 2: Port-forward (no ALB needed)
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+# Open http://localhost:3000
+# Credentials: admin / admin
+```
+
+**Falco Security Events (port-forward only):**
+```bash
+# Falcosidekick UI
+kubectl port-forward -n falco svc/falco-falcosidekick-ui 2802:2802
+# Open http://localhost:2802
+
+# View Falco in Grafana
+# Import dashboard ID: 11914 (Prometheus auto-scrapes Falco metrics)
+```
+
+**Prometheus (port-forward only):**
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+# Open http://localhost:9090
+```
+
 
 
 ## 🔄 CI/CD Integration
@@ -325,8 +356,9 @@ Automated deployment via Jenkins with 4 pipelines:
 - Run once per environment
 
 **2. Monitoring Stack Pipeline (Jenkinsfile-monitoring):**
-- Deploys Metrics Server (for HPA), Prometheus, and Grafana
-- Configures Grafana ingress with ALB
+- Deploys Metrics Server (for HPA), Prometheus, Grafana, and Falco
+- Configures Grafana ingress with ALB (optional)
+- Falco provides runtime security monitoring with Falcosidekick UI
 - Run once per environment
 
 **3. Application Pipeline (Jenkinsfile):**
@@ -388,6 +420,7 @@ Frontend and backend application code generated with **Claude Sonnet 4.5** to ac
 8. Dropping all Linux capabilities provides defense-in-depth against container breakout exploits
 9. Network policies implement zero-trust (default deny, explicit allow) without infrastructure changes - pure Kubernetes resources
 10. Trivy vulnerability scanning in CI/CD catches security issues before production deployment
+11. Falco runtime security monitoring detects suspicious behavior (shell spawns, file changes, privilege escalation) with Grafana integration
 
 ## 🤝 Contributing
 
