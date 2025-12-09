@@ -105,12 +105,15 @@ platform-ai-chatbot/
         ├── chatbot-backend-service-account.yaml # Pod Identity
         ├── chatbot-backend-rbac.yaml            # RBAC permissions
         ├── chatbot-backend-pdb.yaml             # Disruption budget
+        ├── chatbot-backend-hpa.yaml             # Horizontal Pod Autoscaler
         ├── chatbot-frontend-deployment.yaml     # Frontend pods
         ├── chatbot-frontend-service.yaml        # Frontend K8s service
-        ├── chatbot-ingress.yaml                 # Chatbot ALB ingress
+        ├── chatbot-frontend-pdb.yaml            # Frontend disruption budget
+        ├── ingress.yaml                         # Chatbot ALB ingress
         ├── network-policy-default-deny.yaml     # Default deny all traffic
         ├── network-policy-backend.yaml          # Backend network rules
-        └── network-policy-frontend.yaml         # Frontend network rules
+        ├── network-policy-frontend.yaml         # Frontend network rules
+        └── storage-class.yaml                   # EBS storage class
 ```
 
 ## 🔒 Security Architecture
