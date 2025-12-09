@@ -52,11 +52,12 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Zero Credential Exposure:** Secrets always encrypted (at rest in Secrets Manager with KMS, in transit via TLS 1.2+, in use loaded to memory only), never in code, images, manifests, or disk
 - **End-to-End Encryption:** SSL/TLS for RDS connections, HTTPS for AWS API calls, encrypted EBS volumes
 - **Pod Identity:** AWS authentication without static credentials, tokens, or OIDC configuration files
+- **Pod Security Standards:** Baseline enforcement with Restricted audit/warn (Kubernetes built-in security policies)
 - **Network Policies:** Zero-trust networking (default deny all, backend accepts only frontend traffic, frontend sends only to backend)
 - **Vulnerability Scanning:** Automated Trivy scans in CI/CD (blocks CRITICAL vulnerabilities, archives reports)
 - **Least Privilege IAM:** Backend restricted to `bedrock:InvokeModel` on specific model ARN only
 - **Linux Capabilities:** All capabilities dropped (capabilities.drop: ALL) for defense against container breakout
-- **Security Context:** Non-root containers (UID 1000) with privilege escalation disabled and all Linux capabilities dropped
+- **Security Context:** Non-root containers (UID 1000) with seccomp profile and privilege escalation disabled
 - **Resource Isolation:** Memory/CPU requests and limits prevent resource exhaustion and noisy neighbor attacks
 
 **Code Quality:**
@@ -100,6 +101,7 @@ platform-ai-chatbot/
     ├── values-prod.yaml     # Production overrides
     ├── grafana-ingress.yaml # Grafana ALB ingress (used by monitoring pipeline)
     └── templates/
+        ├── namespace.yaml                       # Namespace with Pod Security Standards
         ├── chatbot-backend-deployment.yaml      # Backend pods
         ├── chatbot-backend-service.yaml         # Backend K8s service
         ├── chatbot-backend-service-account.yaml # Pod Identity
@@ -164,6 +166,7 @@ Evaluated AWS Secrets Store CSI Driver but chose init containers for:
 
 ### Kubernetes Security
 
+- **Pod Security Standards:** Baseline enforcement with Restricted audit/warn (blocks privilege escalation, enforces seccomp profiles)
 - **RBAC:** Service account permissions limited to required Kubernetes resources only
 - **Network Policies:** Zero-trust networking with default deny all, backend accepts ingress only from frontend, frontend egress only to backend + DNS
 
@@ -424,6 +427,7 @@ Frontend and backend application code generated with **Claude Sonnet 4.5** to ac
 9. Network policies implement zero-trust (default deny, explicit allow) without infrastructure changes - pure Kubernetes resources
 10. Trivy vulnerability scanning in CI/CD catches security issues before production deployment
 11. Falco runtime security monitoring detects suspicious behavior (shell spawns, file changes, privilege escalation) with Grafana integration
+12. Pod Security Standards enforce Kubernetes security policies (baseline enforcement prevents privilege escalation, seccomp profiles restrict syscalls)
 
 ## 🤝 Contributing
 

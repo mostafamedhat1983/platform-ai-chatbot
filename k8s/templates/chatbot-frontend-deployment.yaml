@@ -55,11 +55,14 @@ spec:
         # Security Context
         # ========================================
         # Run as non-root user (UID 1000) with no privilege escalation
+        # seccompProfile enforces syscall restrictions (Pod Security Standards)
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
           allowPrivilegeEscalation: false
           runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
           capabilities:
             drop:
               - ALL
