@@ -5,7 +5,8 @@ RUN groupadd -r -g 1000 appuser && useradd -r -u 1000 -g 1000 -m -d /home/appuse
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip>=25.3 && \
+    pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 RUN chown -R appuser:appuser /app
 
