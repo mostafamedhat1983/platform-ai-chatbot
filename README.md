@@ -325,9 +325,11 @@ Automated deployment via Jenkins with 4 pipelines:
 **3. Application Pipeline (Jenkinsfile):**
 - Builds Docker images with versioned tags
 - Pushes to ECR with automated authentication
+- Scans images with Trivy (fails on CRITICAL vulnerabilities, reports HIGH/MEDIUM/LOW)
 - Deploys with Helm using environment-specific values
 - Verifies deployment health
 - Triggered automatically on Git commits
+- Scan reports archived in Jenkins (Build → Artifacts → *-scan.json)
 
 **Environment Management:**
 - Global `TARGET_ENVIRONMENT` variable (dev/prod) set in Jenkins
