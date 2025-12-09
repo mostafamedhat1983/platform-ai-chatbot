@@ -63,6 +63,28 @@ spec:
             }
         }
         
+        stage('Deploy Falco') {
+            steps {
+                container('kubectl') {
+                    sh """
+                        helm repo add falcosecurity https://falcosecurity.github.io/charts
+                        helm repo update
+                        helm upgrade --install falco falcosecurity/falco \
+                          --namespace falco \
+                          --create-namespace \
+                          --set falco.grpc.enabled=true \
+                          --set falco.grpcOutput.enabled=true \
+                          --set falcosidekick.enabled=true \
+                          --set falcosidekick.webui.enabled=true \
+                          --set falcoExporter.enabled=true \
+                          --set falcoExporter.serviceMonitor.enabled=true
+                        echo "Falco deployed, waiting for startup..."
+                        sleep 20
+                    """
+                }
+            }
+        }
+        
         stage('Verify & Get Access') {
             steps {
                 container('kubectl') {
@@ -71,6 +93,12 @@ spec:
                         kubectl get ingress grafana-ingress -n ${MONITORING_NS}
                         echo "URL: https://grafana.mostafa-medhat.online (after DNS setup)"
                         echo "Credentials: admin / admin"
+                        echo "\\n=== Falco Access ==="
+                        echo "Falcosidekick UI: kubectl port-forward -n falco svc/falco-falcosidekick-ui 2802:2802"
+                        echo "Then open: http://localhost:2802"
+                        echo "\\n=== Grafana Integration ==="
+                        echo "Prometheus scrapes Falco metrics automatically via ServiceMonitor"
+                        echo "Import Grafana dashboard ID: 11914 for Falco visualization"
                     """
                 }
             }
