@@ -232,17 +232,39 @@ Enables Jenkins to spawn ephemeral build agents as Kubernetes pods.
 # Connect to Jenkins EC2 via SSM
 aws ssm start-session --target <jenkins-instance-id> --region us-east-2
 
-# Create service account and token for Jenkins authentication
-aws eks update-kubeconfig --name platform-dev --region us-east-2 # or platform-prod if you are creating production environment
+# Configure kubectl
+aws eks update-kubeconfig --name platform-dev --region us-east-2 # or platform-prod
+
+# Create service account
 kubectl create serviceaccount jenkins-sa -n default
+
+# Create RBAC permissions
 kubectl create clusterrolebinding jenkins-admin --clusterrole=cluster-admin --serviceaccount=default:jenkins-sa
-kubectl create token jenkins-sa --duration=8760h -n default  # Copy token
+
+# Create permanent token Secret (no expiration)
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jenkins-sa-token
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: jenkins-sa
+type: kubernetes.io/service-account-token
+EOF
+
+# Get token (copy output)
+kubectl get secret jenkins-sa-token -n default -o jsonpath='{.data.token}' | base64 -d
 ```
+
+**Security:** Token stored as Kubernetes Secret (encrypted in etcd, RBAC-protected, accessible only to authorized users).
 
 **Add to Jenkins:**
 - Credentials → Add → Kind: Secret text, ID: `jenkins-k8s-token`, paste token
 - Configure Clouds → Add Kubernetes → URL: `https://<eks-endpoint>`, Namespace: default, Credentials: jenkins-k8s-token
 - ☑️ Disable https certificate check | ☑️ WebSocket
+
+**Production Note:** For production environments, replace `cluster-admin` with least privilege permissions (only `pods`, `pods/log`, `pods/exec` access) to follow security best practices.
 
 **3. Configure Environment Variable:**
 - Manage Jenkins → System → Global properties
