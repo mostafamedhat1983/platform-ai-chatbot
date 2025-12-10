@@ -64,7 +64,9 @@ spec:
             steps {
                 container('docker') {
                     sh """
-                        apk add --no-cache trivy
+                        # Install Trivy from official source
+                        apk add --no-cache curl
+                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
                         
                         # Scan and fail on CRITICAL vulnerabilities
                         trivy image --severity CRITICAL --exit-code 1 ${ECR_REGISTRY}/${ECR_REPOSITORY}:${BACKEND_IMAGE_TAG}
