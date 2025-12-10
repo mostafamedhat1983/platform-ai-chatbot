@@ -261,8 +261,13 @@ kubectl get secret jenkins-sa-token -n default -o jsonpath='{.data.token}' | bas
 
 **Add to Jenkins:**
 - Credentials → Add → Kind: Secret text, ID: `jenkins-k8s-token`, paste token
-- Configure Clouds → Add Kubernetes → URL: `https://<eks-endpoint>`, Namespace: default, Credentials: jenkins-k8s-token
-- ☑️ Disable https certificate check | ☑️ WebSocket
+- Configure Clouds → Add Kubernetes:
+  - **Kubernetes URL:** `https://<eks-endpoint>`
+  - **Kubernetes Namespace:** `default`
+  - **Credentials:** `jenkins-k8s-token`
+  - **Jenkins URL:** `http://<jenkins-ec2-private-ip>:8080` (e.g., `http://10.0.3.123:8080`)
+  - ☑️ Disable https certificate check
+  - ☑️ WebSocket
 
 **Production Note:** For production environments, replace `cluster-admin` with least privilege permissions (only `pods`, `pods/log`, `pods/exec` access) to follow security best practices.
 
