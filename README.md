@@ -31,6 +31,7 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Security:** Pod Identity for AWS authentication, init containers for secrets, RBAC, network policies, Falco runtime security
 - **Monitoring:** Prometheus, Grafana, Falco (security events)
 - **Reliability:** Pod Disruption Budgets, rolling updates, health checks, auto-restart
+- **Storage:** EBS gp3 StorageClass configured (encrypted, for future stateful workloads)
 
 ## 🛠️ What Makes This Different
 
