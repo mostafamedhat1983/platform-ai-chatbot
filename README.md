@@ -432,6 +432,9 @@ Helm charts support ArgoCD/FluxCD for declarative deployments with automatic syn
 
 ## 🔮 Future Enhancements
 
+**GitOps with ArgoCD:**
+Implement ArgoCD for declarative GitOps deployments with automatic sync from Git, providing audit trail, easy rollbacks, and separation between build (Jenkins) and deploy (ArgoCD) phases.
+
 **External Secrets Operator:**
 Replace init containers with External Secrets Operator for automatic secret rotation and centralized secret management across multiple secrets sources (Secrets Manager, Parameter Store, Vault).
 
@@ -440,6 +443,8 @@ Replace init containers with External Secrets Operator for automatic secret rota
 - Rate limiting and request throttling
 - Multi-region deployment for disaster recovery
 - A/B testing infrastructure for model comparison
+- Automated testing (pytest for backend, integration tests)
+- API documentation with FastAPI /docs screenshots
 
 ## 🤖 AI-Assisted Development
 
