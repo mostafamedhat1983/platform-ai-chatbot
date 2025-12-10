@@ -221,11 +221,14 @@ chatbot:
 ### Phase 2: Jenkins Pipeline Setup
 
 **1. Configure Jenkins-Kubernetes Integration:**
+
+Enables Jenkins to spawn ephemeral build agents as Kubernetes pods.
+
 ```bash
 # Connect to Jenkins EC2 via SSM
 aws ssm start-session --target <jenkins-instance-id> --region us-east-2
 
-# Create service account and token
+# Create service account and token for Jenkins authentication
 aws eks update-kubeconfig --name platform-dev --region us-east-2
 kubectl create serviceaccount jenkins-sa -n default
 kubectl create clusterrolebinding jenkins-admin --clusterrole=cluster-admin --serviceaccount=default:jenkins-sa
