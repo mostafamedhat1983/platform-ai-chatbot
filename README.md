@@ -229,7 +229,7 @@ Enables Jenkins to spawn ephemeral build agents as Kubernetes pods.
 aws ssm start-session --target <jenkins-instance-id> --region us-east-2
 
 # Create service account and token for Jenkins authentication
-aws eks update-kubeconfig --name platform-dev --region us-east-2
+aws eks update-kubeconfig --name platform-dev --region us-east-2 # or platform-prod if you are creating production environment
 kubectl create serviceaccount jenkins-sa -n default
 kubectl create clusterrolebinding jenkins-admin --clusterrole=cluster-admin --serviceaccount=default:jenkins-sa
 kubectl create token jenkins-sa --duration=8760h -n default  # Copy token
