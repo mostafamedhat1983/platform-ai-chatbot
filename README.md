@@ -250,31 +250,35 @@ kubectl create token jenkins-sa --duration=8760h -n default  # Copy token
 
 **4. Run Pipelines in Order:**
 
-**1. Setup Pipeline** (Jenkinsfile-setup)
+**1. Setup Pipeline**
 ```
+Script Path: jenkins/Jenkinsfile-setup
 Purpose: Configure kubectl on Jenkins EC2
 Runs on: Jenkins EC2 (agent any)
 Frequency: Once per environment
 ```
 
-**2. ALB Controller Pipeline** (Jenkinsfile-alb-controller)
+**2. ALB Controller Pipeline**
 ```
+Script Path: jenkins/Jenkinsfile-alb-controller
 Purpose: Install AWS Load Balancer Controller
 Runs on: Kubernetes pod
 Frequency: Once per environment
 Creates: ALB controller (no ALBs yet)
 ```
 
-**3. Monitoring Pipeline** (Jenkinsfile-monitoring)
+**3. Monitoring Pipeline**
 ```
+Script Path: jenkins/Jenkinsfile-monitoring
 Purpose: Deploy Metrics Server + Prometheus + Grafana
 Runs on: Kubernetes pod
 Frequency: Once per environment
 Creates: Grafana ingress → triggers first ALB creation
 ```
 
-**4. Application Pipeline** (Jenkinsfile)
+**4. Application Pipeline**
 ```
+Script Path: jenkins/Jenkinsfile
 Purpose: Build images + deploy chatbot
 Runs on: Kubernetes pod
 Frequency: Automatic on Git commits
