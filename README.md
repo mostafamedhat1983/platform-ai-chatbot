@@ -220,7 +220,11 @@ chatbot:
 
 ### Phase 2: Jenkins Pipeline Setup
 
-**1. Configure Jenkins-Kubernetes Integration:**
+**1. Install Kubernetes Plugin:**
+- Manage Jenkins → Plugins → Available plugins
+- Search "Kubernetes" → Install (restart Jenkins if required)
+
+**2. Create Service Account and Token:**
 
 Enables Jenkins to spawn ephemeral build agents as Kubernetes pods.
 
@@ -240,11 +244,11 @@ kubectl create token jenkins-sa --duration=8760h -n default  # Copy token
 - Configure Clouds → Add Kubernetes → URL: `https://<eks-endpoint>`, Namespace: default, Credentials: jenkins-k8s-token
 - ☑️ Disable https certificate check | ☑️ WebSocket
 
-**2. Configure Environment Variable:**
+**3. Configure Environment Variable:**
 - Manage Jenkins → System → Global properties
 - Add: `TARGET_ENVIRONMENT` = `dev` (or `prod`)
 
-**3. Run Pipelines in Order:**
+**4. Run Pipelines in Order:**
 
 **1. Setup Pipeline** (Jenkinsfile-setup)
 ```
