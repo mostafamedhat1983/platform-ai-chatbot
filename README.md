@@ -220,11 +220,28 @@ chatbot:
 
 ### Phase 2: Jenkins Pipeline Setup
 
-**Configure Jenkins Global Variable:**
-- Jenkins → Manage Jenkins → System → Global properties
+**1. Configure Jenkins-Kubernetes Integration:**
+```bash
+# Connect to Jenkins EC2 via SSM
+aws ssm start-session --target <jenkins-instance-id> --region us-east-2
+
+# Create service account and token
+aws eks update-kubeconfig --name platform-dev --region us-east-2
+kubectl create serviceaccount jenkins-sa -n default
+kubectl create clusterrolebinding jenkins-admin --clusterrole=cluster-admin --serviceaccount=default:jenkins-sa
+kubectl create token jenkins-sa --duration=8760h -n default  # Copy token
+```
+
+**Add to Jenkins:**
+- Credentials → Add → Kind: Secret text, ID: `jenkins-k8s-token`, paste token
+- Configure Clouds → Add Kubernetes → URL: `https://<eks-endpoint>`, Namespace: default, Credentials: jenkins-k8s-token
+- ☑️ Disable https certificate check | ☑️ WebSocket
+
+**2. Configure Environment Variable:**
+- Manage Jenkins → System → Global properties
 - Add: `TARGET_ENVIRONMENT` = `dev` (or `prod`)
 
-**Run Pipelines in Order:**
+**3. Run Pipelines in Order:**
 
 **1. Setup Pipeline** (Jenkinsfile-setup)
 ```
