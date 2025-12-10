@@ -76,6 +76,7 @@ spec:
                           --set falco.grpcOutput.enabled=true \
                           --set falcosidekick.enabled=true \
                           --set falcosidekick.webui.enabled=true \
+                          --set falcosidekick.webui.redis.enabled=true \
                           --set falcoExporter.enabled=true \
                           --set falcoExporter.serviceMonitor.enabled=true
                         echo "Falco deployed, waiting for startup..."
