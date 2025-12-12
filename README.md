@@ -24,6 +24,9 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 - **Backend:** FastAPI REST API + AWS Bedrock DeepSeek V3.1 + MySQL conversation storage
 - **Frontend:** Streamlit web interface with session management and error handling
 
+![AI Chatbot User Interface](./docs/images/chatbot-ui.jpg)
+*AI Chatbot running on AWS EKS with DeepSeek V3.1, featuring session management and conversation history*
+
 **Deployment Stack:**
 - **Container Orchestration:** Kubernetes (EKS) with Helm charts
 - **AI Service:** AWS Bedrock DeepSeek V3.1 (serverless, pay-per-use)
@@ -362,6 +365,14 @@ kubectl logs -l app=chatbot-backend -c chatbot-backend
 kubectl logs -l app=chatbot-backend -c fetch-secrets  # Init container
 ```
 
+**K9s Dashboard Views:**
+
+![K9s Pods Overview](./docs/images/k9s-pods-overview.jpg)
+*K9s showing chatbot pods running across multiple namespaces*
+
+![K9s Workloads Detail](./docs/images/k9s-workloads-detail.jpg)
+*K9s detailed view of all Kubernetes workloads including deployments, pods, and system components*
+
 ### Deployment Timing
 - SSL certificate validation: 5-30 min
 - Setup pipeline: 1 min
@@ -386,6 +397,17 @@ kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
 # Credentials: admin / admin
 ```
 
+**Grafana Dashboards:**
+
+![Grafana Chatbot Resources](./docs/images/grafana-chatbot-resources.jpg)
+*Grafana monitoring chatbot namespace: CPU/Memory utilization, pod metrics, and resource quotas*
+
+![Grafana Falco Monitoring](./docs/images/grafana-falco-monitoring.jpg)
+*Grafana monitoring Falco security events: runtime security alerts and system call analysis*
+
+![Grafana System Resources](./docs/images/grafana-system-resources.jpg)
+*Grafana monitoring kube-system namespace: cluster-level resource utilization and infrastructure health*
+
 **Falco Security Events (port-forward only):**
 ```bash
 # Falcosidekick UI
@@ -395,6 +417,9 @@ kubectl port-forward -n falco svc/falco-falcosidekick-ui 2802:2802
 # View Falco in Grafana
 # Import dashboard ID: 11914 (Prometheus auto-scrapes Falco metrics)
 ```
+
+![Falco Security Events](./docs/images/falco-security-events.jpg)
+*Falcosidekick UI showing runtime security events: unauthorized API access attempts and suspicious container activity detected by Falco*
 
 **Prometheus (port-forward only):**
 ```bash
@@ -434,6 +459,9 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 909
 ## 🔄 CI/CD Integration
 
 **Jenkins Pipeline:**
+
+![Jenkins CI/CD Pipelines](./docs/images/jenkins-pipelines.jpg)
+*Jenkins pipelines: deploy-chatbot (application), eks-setup (kubectl config), Install AWS Load Balancer Controller, and Monitoring stack*
 
 Automated deployment via Jenkins with 4 pipelines:
 
