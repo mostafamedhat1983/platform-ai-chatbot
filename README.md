@@ -27,6 +27,72 @@ Full-stack AI chatbot demonstrating modern cloud-native architecture, serverless
 ![AI Chatbot User Interface](./docs/images/chatbot-ui.jpg)
 *AI Chatbot running on AWS EKS with DeepSeek V3.1, featuring session management and conversation history*
 
+# EKS Cluster Internal Architecture
+
+This diagram shows the components running inside the EKS cluster and how they interact with each other and external AWS services.
+
+```mermaid
+graph TD
+    subgraph "User Interaction"
+        User([fa:fa-user User]) -->|HTTPS| ALB(fa:fa-globe AWS Application Load Balancer)
+    end
+
+    subgraph "AWS EKS Cluster"
+        direction LR
+        subgraph "Ingress Control"
+            ALB -- "Routes traffic to" --> Ingress(Ingress Resource)
+            Ingress -- "Managed by" --> ALBIngressController(ALB Ingress<br>Controller)
+        end
+
+        subgraph "Application Workloads"
+            FrontendSvc(fa:fa-server Frontend Service)
+            BackendSvc(fa:fa-server Backend Service)
+            
+            Ingress -- "Forwards to" --> FrontendSvc
+            FrontendSvc --> FrontendDep(fa:fa-cogs Frontend Deployment<br>3x Pods)
+            FrontendDep -- "API Calls" --> BackendSvc
+            BackendSvc --> BackendDep(fa:fa-cogs Backend Deployment<br>3x Pods)
+        end
+
+        subgraph "Monitoring & Security Stack"
+            Prometheus(fa:fa-chart-line Prometheus) -- "Scrapes" --> FrontendDep & BackendDep
+            Grafana(fa:fa-chart-bar Grafana) -- "Visualizes" --> Prometheus
+            Falco(fa:fa-shield-alt Falco) -- "Runtime Security" --> EKSNodes(EKS Nodes)
+            
+            GrafanaIngress(Grafana Ingress)
+            ALB -- "/grafana" --> GrafanaIngress --> Grafana
+        end
+    end
+
+    subgraph "External AWS Services & Dependencies"
+        direction TB
+        ECR(fa:fa-docker Amazon ECR)
+        
+        subgraph "Data, AI & Secrets"
+            RDS(fa:fa-database AWS RDS<br>PostgreSQL)
+            Bedrock(fa:fa-brain AWS Bedrock)
+            SecretsManager(fa:fa-key AWS Secrets Manager)
+        end
+    end
+
+    %% Connections
+    FrontendDep -- "Pulls image from" --> ECR
+    BackendDep -- "Pulls image from" --> ECR
+    BackendDep -- "Fetches DB & API secrets from" --> SecretsManager
+    BackendDep -- "Connects to" --> RDS
+    BackendDep -- "Calls" --> Bedrock
+
+    %% Styling
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E;
+    class ALB,ECR,RDS,Bedrock,SecretsManager aws;
+
+    classDef k8s fill:#326CE5,stroke:#fff,stroke-width:2px,color:#fff;
+    class Ingress,FrontendSvc,BackendSvc,FrontendDep,BackendDep,ALBIngressController,GrafanaIngress,EKSNodes k8s;
+    
+    classDef monitoring fill:#499c54,stroke:#fff,stroke-width:2px,color:#fff;
+    class Prometheus,Grafana,Falco monitoring;
+```
+
 **Deployment Stack:**
 - **Container Orchestration:** Kubernetes (EKS) with Helm charts
 - **AI Service:** AWS Bedrock DeepSeek V3.1 (serverless, pay-per-use)
@@ -457,6 +523,52 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 909
 **Production:** Use free domains (DuckDNS, Freenom) + Let's Encrypt via cert-manager.
 
 ## 🔄 CI/CD Integration
+
+# Project Pipeline Architecture
+
+This diagram illustrates the entire CI/CD process for the `platform-ai-chatbot` project, from a developer's code push to a live deployment in Amazon EKS. It covers both the initial, one-time infrastructure setup and the automated, recurring application deployment pipeline.
+
+```mermaid
+graph TD
+    subgraph "Developer Workflow"
+        Dev([fa:fa-user-tie Developer]) -- "1. git push" --> GitHub(fa:fa-github GitHub Repo)
+    end
+
+    subgraph "CI/CD Orchestration"
+        GitHub -- "2. Webhook Trigger" --> Jenkins(fa:fa-brands fa-jenkins Jenkins Server)
+    end
+
+    Jenkins -- "Initiates Pipeline" --> PipelineChoice{Pipeline Type}
+
+    subgraph "A: One-Time Infrastructure Setup Pipelines (Manual Trigger)"
+        direction LR
+        PipelineChoice -- "Manual Run" --> JenkinsSetup("1. Setup Jenkins-EKS Integration")
+        JenkinsSetup -- "then" --> ALBController("2. Deploy AWS ALB Controller")
+        ALBController -- "then" --> MonitoringStack("3. Deploy Monitoring Stack<br>(Prometheus, Grafana, Falco)")
+    end
+    
+    subgraph "B: Application CI/CD Pipeline (Triggered by Git Push)"
+        PipelineChoice -- "On Push" --> Build("1. Build & Scan Images<br>Backend & Frontend with Trivy")
+        Build -- "2. Push Images to" --> ECR(fa:fa-docker Amazon ECR)
+        ECR -- "3. Trigger Deployment" --> Deploy("4. Deploy to EKS<br>via Helm Upgrade")
+        Deploy -- "5. Verify" --> Verify(fa:fa-check-circle Pods Running)
+    end
+
+    subgraph "AWS Target Environment"
+        EKS(fa:fa-cubes AWS EKS Cluster)
+    end
+
+    %% Connect pipelines to the environment
+    MonitoringStack -- "Deploys to" --> EKS
+    Verify -- "Confirms deployment in" --> EKS
+
+    %% Styling
+    classDef manual fill:#fffbe6,stroke:#8c7853,stroke-width:2px;
+    class JenkinsSetup,ALBController,MonitoringStack manual;
+
+    classDef auto fill:#e3f2fd,stroke:#367f9d,stroke-width:2px;
+    class Build,ECR,Deploy,Verify auto;
+```
 
 **Jenkins Pipeline:**
 
